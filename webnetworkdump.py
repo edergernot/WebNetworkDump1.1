@@ -30,7 +30,6 @@ def add_to_data(key, parsed, hostname, vrf='NONE'):
     if key not in data.keys():
         data[key]=[]
     for line in parsed:
-        print (line)
         item={}
         item['Devicename']=hostname
         if vrf != 'NONE':
