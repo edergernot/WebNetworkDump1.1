@@ -1,0 +1,10 @@
+OUTPUT_DIR ="./output"
+DUMP_DIR = "./dump"
+username = ""
+password = ""
+ip_network =" "
+devices = []
+dump_data = {}
+excelfiles = 0
+config_files = 0
+data={}

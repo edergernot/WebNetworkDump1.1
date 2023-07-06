@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h3> Device Overview </h3>
+    <table class="table table-bordered table-hover table-sm">
+        <thead>
+            <tr>
+                <th>Hostname</th>
+                <th>IP-Addr</th>
+                <th>Username</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <thead>
+            {% for device in devices %}
+                <tbody>
+                    <tr>
+                        <td scope="row">{{ device.device_name }}</td>
+                        <td>{{ device.device_ip }}</td>
+                        <td>{{ device.device_username }}</td>
+                        <td>{{ device.device_type }}</td>
+                    </tr>
+                </tbody>    
+            {% endfor %}
+        </thead>
+    </table>
+{% endblock content %}

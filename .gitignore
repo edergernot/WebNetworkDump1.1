@@ -1,0 +1,16 @@
+./dump/*
+./dump*
+./output/*
+./output*
+./venv*
+./venv/*
+./__pycache__*
+./__pycache__/*
+./__pycache__
+*.pyc
+*pychache*
+venv/
+win_venv/
+**/__pycache__/
+.vscode
+./__pycache__/*

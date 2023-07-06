@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1> Device Discovery</h1>
+    <legend class="border-bottom mb-4"></legend>
+    <div class="contents-selection">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}  
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Enter the Device Login Credentials:</legend>
+                <div class"form-group">
+                    {{ form.username.label(class="form-control-label") }}
+                    {% if form.username.errors %}
+                        {{ form.username(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.username.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.username(class="form-control form-control-lg") }}
+                    {% endif %} 
+                    
+                </div>
+                <div class"form-group">
+                    {{ form.password.label(class="form-control-label") }}
+                    {{ form.password(class="form-control form-control-lg") }}
+                </div>
+                <div class"form-group">
+                    {{ form.ip_network.label(class="form-control-label") }}
+                    {{ form.ip_network(class="form-control form-control-lg") }}
+                </div>
+            </fieldset>
+            <legend class="border-bottom mb-4"></legend>
+            <p>When pressing the button, try to login to these devices</p>
+            <p>This can take a while</p>
+            <div class"form-group">
+                {{ form.submit(class="btn btn-outline-dark") }}
+            </div>
+        </form>
+    </div>
+
+{% endblock content %}

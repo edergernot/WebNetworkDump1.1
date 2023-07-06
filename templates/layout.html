@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+        {% if title %}
+            <title>Network Dump 1.1 - {{ title }}</title>
+        {% else %}
+            <title>Network Dump 1.1</title>
+        {% endif %}
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet" >
+    
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    </head>
+</html>
+<body>
+    <header class="site-header">      
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+          <div class="container">
+            <img src="{{url_for('static', filename='images.png')}}"/>
+            <a class="navbar-brand mr-4" href="/">Network Dump 1.1</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarToggle">
+              <div class="navbar-nav navbar-left">
+                <a class="nav-item nav-link" href="/devicediscovery">Discovery</a>
+                <a class="nav-item nav-link" href="/device_view">View Devices</a>
+                <a class="nav-item nav-link" href="/dump_loading">Dump</a>   
+                <a class="nav-item nav-link" href="/download_dump">Download Data</a>    
+              </div>
+            </div>
+            <div> <!-- Navbar Right Side -->
+              <span> 
+                  <div class="navbar-nav navbar-right" >
+                    <a class="nav-item nav-link" href="/delete">Delete old Data</a>
+                    <a class="nav-item nav-link" href="/about">About</a>
+                  </div>
+                </span>   
+            </div>
+          </div>
+        </nav>
+      </header>
+      <main role="main" class="container">
+        <div class="row">
+          <div class="col-md-8">
+            <!-- Print Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in  messages%}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+          </div>
+          <div class="col-md-4">
+            <div class="content-section">
+              <h3>Status</h3>
+              <p class='text-muted'>Status Data
+                <ul class="list-group">
+                  <li class="list-group-item list-group-item-light">Devices ready to dump : {{status.networkdevices}}</li>
+                  <li class="list-group-item list-group-item-light">Dump Files : {{status.number_of_dumpfiles}}</li>
+                </ul>
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+    <script type="text/javascript">
+      function loading(){
+          $("#loading").show();
+          $("#content").hide();       
+      }
+    </script>
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}" ></script>
+
+    
+</body>

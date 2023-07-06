@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h3> A simple web-application to get infos out of networkdevices</h3>
+    <p></p>
+    <p>This tools will discover IP-Networks and try to login via SSH with the provided credentials.</p>
+    <p>When discovery is done, you can do a dump and it will do a SSH-Session to every device and do a bunch of commands to get network status.</p>
+    <p>Data will be stored in files and you can download the files a singel zip file. </p>
+    <p></p>
+    <p></p>
+    <div class="border-top pt-3">      
+        Start Discovery ? <a class="ml-2" href="/devicediscovery">Discover Devices now!</a>
+    </div>
+
+{% endblock content %}

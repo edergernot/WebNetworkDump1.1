@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div>
+    <h3> Device Discovery </h3>
+    Now we try to discover to all hosts in network {{ip_network}}
+    </div>
+    <div class="spinner-grow" role="status">
+        <span class="visually-hidden">Discovering Devices...</span>
+    </div>
+    
+{% endblock content %}

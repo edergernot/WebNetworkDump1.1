@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h3> Device Discovery Done ! </h3>
+    <p>You can do the dump now or discover more devices!</p>
+    <p></p>
+    <div class="border-top pt-3">
+        Start Datadump? <a class="ml-2" href="{{ url_for('dump_loading') }}">Dump the Network Devices now</a>
+        <p>Additional Discovery? <a class="ml-2" href="{{ url_for('device_discovery') }}">Discover additional devices</a></p>
+    </div>
+{% endblock content %}
