@@ -95,6 +95,25 @@ ASA_COMMANDS = ["show clock",
             "show flash"
             ]
 
+HP_COMWARE_COMMANDS = ["display clock",
+                       "display version",
+                       "display current-configuration",
+                       "display interface",
+                       "display device manuinfo",
+                       "display interface",
+                       "display ip interface",
+                       "display display ip routing-table",
+                       "display link-aggregation verbose",
+                       "display lldp neighbor-information verbose",
+                       "display vlan all",
+                       "display mac-address",
+                       "display stp",
+                       "display counters inbound interface",
+                       "display counters outbound interface",
+                       "display environment",
+                       ""
+                       ]
+
 from netmiko import ConnectHandler
 import logging
 
@@ -295,6 +314,35 @@ def dump_paloalto_panos(device):
     except Exception as e:
         logging.debug('get_dumps.dump_cisco_asa: Somthing went wrong with sending commands')
         print (e)
+    return
+
+def dump_hp_comware(device):
+    hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
+    try:
+        ssh_session = ConnectHandler(**device)
+    except Exception as e:
+        logging.debug(f'get_dumps.dump_hp_comware Something went wrong when connecting Device')
+        logging.debug(e)
+    hostfilename = hostname +"_command.txt"
+    try:
+        with open (f"{OUTPUT_DIR}/{hostfilename}","w") as outputfile:
+            outputfile.write("\n")
+            outputfile.write("*"*40)
+            outputfile.write("\n") 
+            for command in HP_COMWARE_COMMANDS:
+                outputfile.write(command)
+                outputfile.write("\n")
+                outputfile.write("**"+"-"*40+"**")
+                outputfile.write("\n")
+                commandoutput = ssh_session.send_command_timing(command)
+                outputfile.write(commandoutput)
+                outputfile.write("\n")
+                outputfile.write("*"*40)
+                outputfile.write("\n")
+    except Exception as e:
+        logging.debug('get_dumps.dump_hp_comware: Somthing went wrong with sending commands')
+        print (e)
+    return
 
 def dump_worker(device): # Main Thread get device infos
     dump_device=make_netmiko_device(device)
@@ -307,5 +355,7 @@ def dump_worker(device): # Main Thread get device infos
         dump_cisco_asa(dump_device)
     elif dev_type=='paloalto_panos':
         dump_paloalto_panos(dump_device)
+    elif dev_type=="hp_comware":
+        dump_hp_comware(dump_device)
     return
 

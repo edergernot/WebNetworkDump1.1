@@ -43,6 +43,8 @@ def ssh_worker(IP):
         hostname=hostname[:-1]
         if "/" in hostname:
             hostname=hostname.replace("/", "_")
+    if device_type == "hp_comware":
+        hostname=hostname[1:]
     device = network_device(name=hostname, ip_addr=IP, username=username, password=password, 
                             dev_id=1, enabled=True, type=device_type)
     logging.debug(f'get_deviceinfos.ssh_worker. hostname = {hostname}, Type = {device_type}')
