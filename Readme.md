@@ -5,11 +5,11 @@ Then it will login and execute a buntch of "show-commands" depending on devicety
 
 This dump files and parsed files can be downloaded and used for deeper analysis.
 
-I tested with Cisco IOS, IOS-XE, NX-OS and Paloalto Firewalls.
+I tested with Cisco IOS, IOS-XE, NX-OS, HP-Comware and Paloalto Firewalls.
 ## Easystart with DockerContainer on local maschine!
 
 - Get Container from Dockerhub
-  - ```docker run -p 5000:5000 gerni1970/webnetworkdump```
+  - ```docker run -p 5000:5000 edergernot/webnetworkdump```
 
 - Start dumping the Network and browse to:
   - ```http://localhost:5000```
