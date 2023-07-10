@@ -16,3 +16,28 @@ I tested with Cisco IOS, IOS-XE, NX-OS, HP-Comware and Paloalto Firewalls.
 
 Just add devicecredentials to SSH into device and discovery-network.
 
+## Working with webnetworkdump
+
+Index
+![Index](images/index.png)
+
+Discovery
+![Discovery](images/Discovery.png)
+
+Discovery Process
+![Discovery Process](images/Discovery-Process.png)
+
+DeviceView
+![Device View](images/Device-View.png)
+
+Dump
+![Dump](images/Dumping.png)
+
+DumpDone
+![Dump Done](images/Dump_done.png)
+
+Download
+![Download](images/Download.png)
+
+Dumpfile
+![Dumpfile](images/Zipfile.png)
