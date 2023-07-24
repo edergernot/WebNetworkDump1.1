@@ -6,6 +6,11 @@ Then it will login and execute a buntch of "show-commands" depending on devicety
 This dump files and parsed files can be downloaded and used for deeper analysis.
 
 I tested with Cisco IOS, IOS-XE, NX-OS, HP-Comware and Paloalto Firewalls.
+
+If devicetype is discovered by netmiko and no commands where defined, it will use the commands where NTC-Templates has parser for.
+see: https://github.com/networktocode/ntc-templates/blob/master/ntc_templates/templates/index
+
+
 ## Easystart with DockerContainer on local maschine!
 
 - Get Container from Dockerhub

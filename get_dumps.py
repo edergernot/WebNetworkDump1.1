@@ -119,6 +119,19 @@ import logging
 
 OUTPUT_DIR='./dump'
 
+def _get_template_dir():
+    import os, sys
+    import subprocess
+    try:
+        template_dir = os.environ.get("NTC_TEMPLATES_DIR")
+    except Exception: UnboundLocalError
+    if template_dir is None:
+        pip_installed=subprocess.run([sys.executable, '-m', 'pip', 'show', 'ntc-templates'], capture_output=True, text=True)
+        for line in pip_installed.stdout.splitlines():
+            if line.split(" ")[0] == "Location:":
+                site_path= line.split(" ")[1]   
+        template_dir = os.path.join(site_path, "ntc_templates", "templates")
+    return template_dir
 
 def make_netmiko_device(device):
     netmiko_device={}
@@ -344,6 +357,50 @@ def dump_hp_comware(device):
         print (e)
     return
 
+def dump_with_textfsm(device): # get commands from NTC-Templates and dump these.
+    from textfsm import clitable
+    template_dir = _get_template_dir()
+    with open(f"{template_dir}\index") as f:
+        ntc_index=f.read()
+    TEXTFSM_commands=[]
+    dev_vendor = device["device_type"].split("_")[0]
+    dev_os = device["device_type"].split("_")[1]
+    for line in ntc_index.splitlines():
+        ntc_vendor = line.split("_")[0]
+        if ntc_vendor == dev_vendor:
+            ntc_os = line.split("_")[1]
+            if ntc_os == dev_os:
+                vendor_command=line.split(".")[0]
+                parts = vendor_command.split("_")
+                command = " ".join(parts[2:])
+                TEXTFSM_commands.append(command)
+    hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
+    try:
+        ssh_session = ConnectHandler(**device)
+    except Exception as e:
+        logging.debug(f'get_dumps.dump_with_textfsm: Something went wrong when connecting Device')
+        logging.debug(e)
+    hostfilename = hostname +"_command.txt"
+    try:
+        with open (f"{OUTPUT_DIR}/{hostfilename}","w") as outputfile:
+            outputfile.write("\n")
+            outputfile.write("*"*40)
+            outputfile.write("\n")  
+            for command in TEXTFSM_commands:
+                outputfile.write(command)
+                outputfile.write("\n")
+                outputfile.write("**"+"-"*40+"**")
+                outputfile.write("\n")
+                commandoutput = ssh_session.send_command_timing(command)
+                outputfile.write(commandoutput) 
+                outputfile.write("\n")
+                outputfile.write("*"*40)
+                outputfile.write("\n")
+    except Exception as e:
+        logging.debug('get_dumps.dump_with_textfsm: Somthing went wrong with sending commands')
+        logging.debug(e)
+    return
+
 def dump_worker(device): # Main Thread get device infos
     dump_device=make_netmiko_device(device)
     dev_type=dump_device['device_type']
@@ -357,5 +414,7 @@ def dump_worker(device): # Main Thread get device infos
         dump_paloalto_panos(dump_device)
     elif dev_type=="hp_comware":
         dump_hp_comware(dump_device)
+    else:
+        dump_with_textfsm(dump_device)
     return
 
