@@ -10,6 +10,7 @@ RUN pip install -r requirements.txt
 
 RUN mkdir output
 RUN mkdir dump
+RUN mkdir quickcommand
 
 COPY  *.py ./
 COPY  templates ./templates/
