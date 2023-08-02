@@ -254,7 +254,6 @@ def quickcommand_execute():
     quickdevices =[]
     global global_quickcommands, devices
     ena_devices = enabled_devices(devices)
-    content=get_status.get_status(devices)
     number_ena_devices = len(ena_devices)
     commands = global_quickcommands["commands"]
     config = global_quickcommands['config']
@@ -270,7 +269,8 @@ def quickcommand_execute():
     threads = ThreadPool( num_threads )
     results = threads.map( execute_quickcommand, quickdevices )
     threads.close()
-    threads.join()
+    threads.join()#
+    content=get_status.get_status(devices)
     return render_template('quickcommand_execute.html', status=content )
 
 @app.route("/quickcommands_download")
