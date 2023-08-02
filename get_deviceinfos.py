@@ -7,6 +7,11 @@ username = ''
 password = ''
 devices = []
 
+def delete_device():
+    global devices 
+    devices = []
+    return
+
 def ssh_worker(IP):
     '''Logs in to Devices and try to get Device-Type
     Add the device to global devices'''

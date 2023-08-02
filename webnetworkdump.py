@@ -300,6 +300,7 @@ def delete():
     os.mkdir(path) #delete dump directory
     global devices 
     devices = []
+    get_deviceinfos.delete_device()
     global quickcommands
     quickcommands = {}
     content=get_status.get_status(devices)
