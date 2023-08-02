@@ -4,7 +4,7 @@ import os
 from flask import Flask, render_template, flash, url_for, redirect, send_file
 from wtforms.form import FormMeta
 from wtforms.validators import HostnameValidation
-from forms import DeviceDiscoveryForm
+from forms import DeviceDiscoveryForm, QuickCommand
 import ipaddress
 import get_deviceinfos
 import get_status
@@ -13,6 +13,7 @@ from global_init import *
 import logging
 import shutil
 from get_dumps import *
+from get_quickcommands import *
 from multiprocessing.dummy import Pool as ThreadPool
 import json
 
@@ -23,7 +24,7 @@ logging.basicConfig(level=logging.ERROR)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '50421D352F92E548C6AC0147380F58BC'  # used to avoid TCP-Highjacking in Flask
-
+global_quickcommands = {}
 
 def add_to_data(key, parsed, hostname, vrf='NONE'):
     global data
@@ -56,6 +57,13 @@ def find_type_from_hostname(devices,hostname):
     for device in devices:
         if device.name == hostname:
             return(device.type)
+
+def enabled_devices(devices):
+    ena_devices=[]
+    for device in devices:
+        if device.enabled :
+            ena_devices.append(device)
+    return(ena_devices)
 
 @app.route("/")
 def index():
@@ -119,6 +127,7 @@ def device_view():
         webdevice['device_ip']=device.ip_addr
         webdevice['device_username']=device.username
         webdevice['device_type']=device.type
+        webdevice['device_enabled']=device.enabled
         webdevices.append(webdevice)
         logging.debug(f'webnetworkdump.device_view.  Webdevices build from Devices: {webdevice}')
     content=get_status.get_status(devices)
@@ -213,11 +222,65 @@ def dump():
 @app.route("/download_dump")
 def download_dump():
     # Export dump_data
-
     shutil.make_archive("./output/NetworkDump", 'zip', "./dump")
     output_path = "./output/NetworkDump.zip"
-    return send_file(output_path, as_attachment=True)
+    return send_file(output_path, as_attachment=True)#
+
+@app.route("/quickcommands", methods=['GET', 'POST'])
+def quickcommands():
+    global global_quickcommands
+    content=get_status.get_status(devices)
+    form = QuickCommand()
+    if form.validate_on_submit():
+        commands=form.commands.data
+        config=form.config.data
+        global_quickcommands["commands"]=commands
+        global_quickcommands["config"]=config
+        return redirect(url_for('quickcommand_loading'))
+    return render_template("quickcommands.html", form=form, title="QuickCommand", status=content)
     
+@app.route("/quickcommand_loading") # shows spinning weel and starts "trylogon"
+def quickcommand_loading():
+    global global_quickcommands, devices
+    ena_devices = enabled_devices(devices)
+    content=get_status.get_status(devices)
+    number_ena_devices = len(ena_devices)
+    number_quickcommands=len(global_quickcommands["commands"].split("\n"))
+    logging.debug(f'webnetworkdump.quickcommand_loading. Number of Hosts in Network: {number_ena_devices}')
+    return render_template('quickcommand_loading.html', status=content, text=f'One moment please!\nExecuting  {number_quickcommands} commands on {number_ena_devices} devices ...')
+    
+@app.route("/quickcommand_execute")    
+def quickcommand_execute():
+    quickdevices =[]
+    global global_quickcommands, devices
+    ena_devices = enabled_devices(devices)
+    content=get_status.get_status(devices)
+    number_ena_devices = len(ena_devices)
+    commands = global_quickcommands["commands"]
+    config = global_quickcommands['config']
+    for dev in ena_devices:  # prepair devices for quickcommand worker
+        quickdevice=make_netmiko_device(dev)
+        quickdevice["config"]=config
+        quickdevice["commands"]=commands
+        quickdevices.append(quickdevice)
+    if number_ena_devices < 30 :
+        num_threads=len(devices)
+    else:
+        num_threads=30
+    threads = ThreadPool( num_threads )
+    results = threads.map( execute_quickcommand, quickdevices )
+    threads.close()
+    threads.join()
+    return render_template('quickcommand_execute.html', status=content )
+
+@app.route("/quickcommands_download")
+def quickcommands_download():
+    # Export quickcommands
+    shutil.make_archive("./output/Quickcommands", 'zip', "./quickcommand")
+    output_path = "./output/Quickcommands.zip"
+    return send_file(output_path, as_attachment=True)
+
+
 @app.route("/delete")
 def delete():
     if os.path.exists("./dump"):
@@ -229,9 +292,16 @@ def delete():
         shutil.rmtree("./output", ignore_errors=False, onerror=None)
     #create empty dump directory
     path = os.path.join("./","output")
+    os.mkdir(path) #delete quickdump directory
+    if os.path.exists("./quickcommand"):
+        shutil.rmtree("./quickcommand", ignore_errors=False, onerror=None)
+    #create empty quickdump directory
+    path = os.path.join("./","quickcommand")
     os.mkdir(path) #delete dump directory
     global devices 
     devices = []
+    global quickcommands
+    quickcommands = {}
     content=get_status.get_status(devices)
     return render_template("index.html",status=content)
 

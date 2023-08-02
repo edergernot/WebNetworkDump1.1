@@ -16,3 +16,5 @@ win_venv/
 ./__pycache__/*
 dump/*
 output/*
+quickcommand/*
+

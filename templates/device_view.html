@@ -8,6 +8,7 @@
                 <th>IP-Addr</th>
                 <th>Username</th>
                 <th>Type</th>
+                <th>Enabled</th>
             </tr>
         </thead>
         <thead>
@@ -18,6 +19,7 @@
                         <td>{{ device.device_ip }}</td>
                         <td>{{ device.device_username }}</td>
                         <td>{{ device.device_type }}</td>
+                        <td> {{ device.device_enabled }}</td>
                     </tr>
                 </tbody>    
             {% endfor %}

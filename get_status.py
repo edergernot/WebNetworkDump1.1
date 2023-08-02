@@ -24,12 +24,24 @@ def number_excelfiles():
     except Exception as e:
         return (0)
 
+def number_quickdumpfiles():
+    num = 0
+    try:
+        files = os.listdir("./quickcommand")
+        for file in files:
+            if "quick" in file:
+                num += 1
+        return(num)
+    except Exception as e:
+        return (0)
+
 def get_status(devices:list):
     device_count=len(devices)
     number_of_dumpfiles = number_dump_files()
     number_of_excelfiles = number_excelfiles()
+    number_of_quickcommandfiles = number_quickdumpfiles()
     status={"number_of_dumpfiles":number_of_dumpfiles,
-            "excelfiles":number_of_excelfiles,
+            "number_quickdump_files":number_of_quickcommandfiles,
             "networkdevices":device_count}
     return (status)
 

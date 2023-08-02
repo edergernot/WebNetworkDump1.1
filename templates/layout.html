@@ -32,7 +32,8 @@
                 <a class="nav-item nav-link" href="/devicediscovery">Discovery</a>
                 <a class="nav-item nav-link" href="/device_view">View Devices</a>
                 <a class="nav-item nav-link" href="/dump_loading">Dump</a>   
-                <a class="nav-item nav-link" href="/download_dump">Download Data</a>    
+                <a class="nav-item nav-link" href="/download_dump">Download Dump</a>
+                <a class="nav-item nav-link" href="/quickcommands">Quick Commands</a>       
               </div>
             </div>
             <div> <!-- Navbar Right Side -->
@@ -68,6 +69,8 @@
                 <ul class="list-group">
                   <li class="list-group-item list-group-item-light">Devices ready to dump : {{status.networkdevices}}</li>
                   <li class="list-group-item list-group-item-light">Dump Files : {{status.number_of_dumpfiles}}</li>
+                  <li class="list-group-item list-group-item-light">Quickdump Files : {{status.number_quickdump_files}}</li>
+                  
                 </ul>
               </p>
             </div>
