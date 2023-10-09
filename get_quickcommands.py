@@ -36,6 +36,8 @@ def execute_quickcommand(device):
                     outputfile.write("**"+"-"*40+"**")
                     outputfile.write("\n")
                     commandoutput = ssh_session.send_command_timing(command)
+                    if "[confirm]" in commandoutput:  # send y wehen confim is needet (f.e Clear counters)
+                        commandoutput +=  ssh_session.send_command_timing('y')
                     outputfile.write(commandoutput) 
                     outputfile.write("\n")
                     outputfile.write("*"*40)
