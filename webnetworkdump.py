@@ -132,7 +132,7 @@ def save_activation():
 def dump_loading():
     global devices
     content=get_status.get_status(devices)
-    return render_template('loading_dump.html', status=content, text=f'Now I dump {len(devices)} devices and parse the receiving data ...')
+    return render_template('loading_dump.html', status=content, text=f"Now I dump {content['enableddevices']} devices and parse the receiving data ...")
 
 @app.route("/dump")
 def dump():
