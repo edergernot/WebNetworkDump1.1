@@ -402,6 +402,8 @@ def dump_with_textfsm(device): # get commands from NTC-Templates and dump these.
     return
 
 def dump_worker(device): # Main Thread get device infos
+    if not device.enabled:
+        return
     dump_device=make_netmiko_device(device)
     dev_type=dump_device['device_type']
     if dev_type=='cisco_ios':
