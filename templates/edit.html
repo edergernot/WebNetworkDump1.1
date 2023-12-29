@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bearbeiten</title>
+</head>
+<body>
+    <h1>Bearbeiten von "{{ obj.name }}"</h1>
+    <form method="post">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="{{ obj.name }}" required>
+        <br>
+        <label for="value">Wert:</label>
+        <input type="number" id="value" name="value" value="{{ obj.value }}" required>
+        <br>
+        <label for="is_active">Aktiviert:</label>
+        <input type="checkbox" id="is_active" name="is_active" {% if obj.is_active %}checked{% endif %}>
+        <br>
+        <button type="submit">Speichern</button>
+    </form>
+</body>
+</html>

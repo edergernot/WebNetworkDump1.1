@@ -1,7 +1,7 @@
 from models import network_device
 from netmiko import ConnectHandler, SSHDetect
 import os
-from flask import Flask, render_template, flash, url_for, redirect, send_file
+from flask import Flask, render_template, flash, url_for, redirect, send_file, request
 from wtforms.form import FormMeta
 from wtforms.validators import HostnameValidation
 from forms import DeviceDiscoveryForm, QuickCommand
@@ -119,19 +119,14 @@ def trylogon():
 def device_view():
     global devices
     logging.debug(f'webnetworkdump.device_view. Device-Objects in View: {devices}')
-    webdevices=[]
-    for device in devices: ## Create list of devices to view in Browser 
-        logging.debug(f'webnetworkdump.device_view.  Single device Object: {device}')
-        webdevice ={}
-        webdevice['device_name']=device.name
-        webdevice['device_ip']=device.ip_addr
-        webdevice['device_username']=device.username
-        webdevice['device_type']=device.type
-        webdevice['device_enabled']=device.enabled
-        webdevices.append(webdevice)
-        logging.debug(f'webnetworkdump.device_view.  Webdevices build from Devices: {webdevice}')
     content=get_status.get_status(devices)
-    return render_template("/device_view.html", status=content, devices=webdevices)
+    return render_template("/device_view.html", status=content, devices=devices)
+
+@app.route("/save_activation", methods=['POST'])
+def save_activation():
+    for device in devices:
+        device.enabled = bool(request.form.get(f'enabled_{device.ip_addr}'))
+    return redirect(url_for('device_view'))
 
 @app.route("/dump_loading")
 def dump_loading():

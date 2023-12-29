@@ -1,28 +1,33 @@
 {% extends "layout.html" %}
 {% block content %}
     <h3> Device Overview </h3>
-    <table class="table table-bordered table-hover table-sm">
-        <thead>
-            <tr>
-                <th>Hostname</th>
-                <th>IP-Addr</th>
-                <th>Username</th>
-                <th>Type</th>
-                <th>Enabled</th>
-            </tr>
-        </thead>
-        <thead>
-            {% for device in devices %}
-                <tbody>
-                    <tr>
-                        <td scope="row">{{ device.device_name }}</td>
-                        <td>{{ device.device_ip }}</td>
-                        <td>{{ device.device_username }}</td>
-                        <td>{{ device.device_type }}</td>
-                        <td> {{ device.device_enabled }}</td>
-                    </tr>
-                </tbody>    
-            {% endfor %}
-        </thead>
-    </table>
+    <form action="save_activation" method="POST">
+        <table class="table table-bordered table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Hostname</th>
+                    <th>IP-Addr</th>
+                    <th>Username</th>
+                    <th>Type</th>
+                    <th>Enabled</th>
+                </tr>
+            </thead>
+            <thead>
+                {% for device in devices %}
+                    <tbody>
+                        <tr>
+                            <td scope="row">{{ device.name }}</td>
+                            <td>{{ device.ip_addr }}</td>
+                            <td>{{ device.username }}</td>
+                            <td>{{ device.type }}</td>
+                            <td>
+                                <input type="checkbox" name="enabled_{{ device.ip_addr }}" {% if device.enabled %}checked{% endif %}>
+                            </td>
+                        </tr>
+                    </tbody>    
+                {% endfor %}
+            </thead>
+        </table>
+        <button type="submit">save settings</button>
+    </form>
 {% endblock content %}
