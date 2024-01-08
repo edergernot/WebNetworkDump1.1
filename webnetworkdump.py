@@ -301,6 +301,27 @@ def delete():
     content=get_status.get_status(devices)
     return render_template("index.html",status=content)
 
+@app.route("/delete_files")
+def delete_files():
+    if os.path.exists("./dump"):
+        shutil.rmtree("./dump", ignore_errors=False, onerror=None)
+    #create empty dump directory
+    path = os.path.join("./","dump")
+    os.mkdir(path) #delete dump directory
+    if os.path.exists("./output"):
+        shutil.rmtree("./output", ignore_errors=False, onerror=None)
+    #create empty dump directory
+    path = os.path.join("./","output")
+    os.mkdir(path) #delete quickdump directory
+    if os.path.exists("./quickcommand"):
+        shutil.rmtree("./quickcommand", ignore_errors=False, onerror=None)
+    #create empty quickdump directory
+    path = os.path.join("./","quickcommand")
+    os.mkdir(path) #delete dump directory
+    content=get_status.get_status(devices)
+    return render_template("index.html",status=content)
+
+
 @app.route("/about")
 def about():
     global devices
