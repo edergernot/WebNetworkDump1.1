@@ -124,8 +124,15 @@ def device_view():
 
 @app.route("/save_activation", methods=['POST'])
 def save_activation():
+    enable_all = bool(request.form.get('enable_all'))
+    disable_all = bool(request.form.get('disable_all'))
     for device in devices:
-        device.enabled = bool(request.form.get(f'enabled_{device.ip_addr}'))
+        if enable_all:
+            device.enabled = True
+        elif disable_all:
+            device.enabled = False
+        else:
+            device.enabled = bool(request.form.get(f'enabled_{device.ip_addr}'))
     return redirect(url_for('device_view'))
 
 @app.route("/dump_loading")
