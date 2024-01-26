@@ -70,6 +70,18 @@ PALO_COMMANDS = ["show system info",
                  "show session meter",
                  ]
 
+PALO_XML_API =["/api/?type=op&cmd=<show><system><info></info></system></show>",
+               "/api/?type=op&cmd=<show><interface>all</interface></show>",
+               "/api/?type=op&cmd=<show><interface>logical</interface></show>",
+               "/api/?type=op&cmd=<show><arp><entry name = 'all'/></arp></show>",
+               "/api/?type=op&cmd=<show><neighbor><interface></interface></neighbor></show>",
+               "/api/?type=op&cmd=<show><routing><route></route></routing></show>",
+               "/api/?type=op&cmd=<show><global-protect-gateway><current-user></current-user></global-protect-gateway></show>",
+               "/api/?type=op&cmd=<show><global-protect-gateway><previous-user></previous-user></global-protect-gateway></show>",
+               "/api/?type=op&cmd=<show><global-protect-gateway><statistics></statistics></global-protect-gateway></show>",
+               "/api/?type=op&cmd=<show><session><meter></meter></session></show>",
+               "<show><high-availability><all></all></high-availability></show>"]
+
 ASA_COMMANDS = ["show clock",
             "show version",
             "show running",
@@ -113,6 +125,8 @@ HP_COMWARE_COMMANDS = ["display clock",
                        "display environment",
                        ""
                        ]
+
+
 
 from netmiko import ConnectHandler
 import logging
@@ -327,6 +341,11 @@ def dump_paloalto_panos(device):
     except Exception as e:
         logging.debug('get_dumps.dump_cisco_asa: Somthing went wrong with sending commands')
         print (e)
+    ###############
+    # To DO 
+    # Make API-Calls 
+    # Create API Key and generte Json Output from XML Return
+    ##########################
     return
 
 def dump_hp_comware(device):
