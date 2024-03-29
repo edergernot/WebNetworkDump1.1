@@ -61,13 +61,18 @@ PALO_COMMANDS = ["show system info",
                  "show interface all",
                  "show interface logical",
                  "show arp all",
-                 "show neighbor interface all",
+                 "show neighbor interface all | match REACHABLE",
                  "show routing route",
                  "show config running",
                  "show global-protect-gateway current-user",
                  "show global-protect-gateway previous-user",
                  "show global-protect-gateway statistics",
                  "show session meter",
+                 "show counter interface all",
+                 "show user ip-user-mapping all | except unknown",
+                 "show dos-block-table all",
+                 "show counter global",
+                 "show system state | match sys.s1.p*"
                  ]
 
 PALO_XML_API =["/api/?type=op&cmd=<show><system><info></info></system></show>",
@@ -80,7 +85,7 @@ PALO_XML_API =["/api/?type=op&cmd=<show><system><info></info></system></show>",
                "/api/?type=op&cmd=<show><global-protect-gateway><previous-user></previous-user></global-protect-gateway></show>",
                "/api/?type=op&cmd=<show><global-protect-gateway><statistics></statistics></global-protect-gateway></show>",
                "/api/?type=op&cmd=<show><session><meter></meter></session></show>",
-               "<show><high-availability><all></all></high-availability></show>"]
+               "/api/?type=op&cmd=<show><high-availability><all></all></high-availability></show>"]
 
 ASA_COMMANDS = ["show clock",
             "show version",
@@ -132,6 +137,10 @@ from netmiko import ConnectHandler
 import logging
 
 OUTPUT_DIR='./dump'
+
+def set_panos_output_xml(ssh_session):
+    command_xml='set cli op-command-xml-output on'
+    ssh_session.send_command_timing(command_xml)
 
 def _get_template_dir():
     import os, sys
@@ -322,6 +331,7 @@ def dump_paloalto_panos(device):
         logging.debug(e)
     hostfilename = hostname +"_command.txt"
     try:
+        set_panos_output_xml(ssh_session) # Set the output format to XML for better parsing 
         with open (f"{OUTPUT_DIR}/{hostfilename}","w") as outputfile:
             outputfile.write("\n")
             outputfile.write("*"*40)
