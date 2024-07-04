@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1> Device Discovery</h1>
+    <legend class="border-bottom mb-4"></legend>
+    <div class="contents-selection">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}  
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Enter the Password for the saved user:</legend>
+                <div class"form-group">
+                    {{ form.password.label(class="form-control-label") }}
+                    {{ form.password(class="form-control form-control-lg") }}
+                </div>
+            
+            </fieldset>
+            <legend class="border-bottom mb-4"></legend>
+            <p>When pressing the button, will import device-file.csv from dump folder</p>
+            <p></p>
+            <div class"form-group">
+                {{ form.submit(class="btn btn-outline-dark") }}
+            </div>
+        </form>
+    </div>
+
+{% endblock content %}

@@ -15,3 +15,6 @@ class QuickCommand(FlaskForm):
     config = BooleanField('Configuration Commands')
     submit = SubmitField('Execute Commands')
 
+class PasswordForm(FlaskForm):
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Import Devices')

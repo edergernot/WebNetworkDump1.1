@@ -4,7 +4,7 @@ import os
 from flask import Flask, render_template, flash, url_for, redirect, send_file, request
 from wtforms.form import FormMeta
 from wtforms.validators import HostnameValidation
-from forms import DeviceDiscoveryForm, QuickCommand
+from forms import DeviceDiscoveryForm, QuickCommand, PasswordForm
 import ipaddress
 import get_deviceinfos
 import get_status
@@ -282,6 +282,31 @@ def quickcommands_download():
     output_path = "./output/Quickcommands.zip"
     return send_file(output_path, as_attachment=True)
 
+@app.route("/import", methods=['GET', 'POST'])
+def import_devices():
+    # Import Devices from device_file
+    # Device file is from previous discovery and ony 1 Password is supported
+    # Quick and dirty method
+    from models import network_device
+    global  devices
+    content=get_status.get_status(devices)
+    form = PasswordForm()
+    if form.validate_on_submit():
+        password=form.password.data
+        with open('./dump/device_file.csv') as f:
+            file = f.read()
+        for line in file.split('\n'):
+            colums=line.split(',')
+            if len(colums)<3:
+                continue
+            hostname=colums[0]
+            device_type=colums[1]
+            IP=colums[2]
+            username=colums[3]
+            device = network_device(name=hostname, ip_addr=IP, username=username, password=password, dev_id=1, enabled=True, type=device_type)
+            devices.append(device)    
+        return redirect('/device_view')
+    return render_template("import.html", form=form, title="Device Import", status=content)
 
 @app.route("/delete")
 def delete():
