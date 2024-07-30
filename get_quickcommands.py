@@ -10,8 +10,10 @@ def execute_quickcommand(device):
     quickcommands = device.pop('commands')
     commands = quickcommands.split("\n")
     config=device.pop('config')
+    logging.debug(f'get_dumps.dump_cisco_ios: Try to Connect to {hostname}')
     try:
         ssh_session = ConnectHandler(**device)
+        logging.debug(f"get_dumps.dump_cisco_ios: Connected to {ssh_session.find_prompt()}")
     except Exception as e:
         logging.debug(f'get_dumps.dump_cisco_ios: Something went wrong when connecting Device')
         logging.debug(e)
@@ -21,8 +23,13 @@ def execute_quickcommand(device):
                 outputfile.write("\n")
                 outputfile.write("*"*40)
                 outputfile.write("\n") 
-                config_output = ssh_session.send_config_set(commands)
-                outputfile.write(config_output)
+                try:
+                    config_output = ssh_session.send_config_set(commands, read_timeout=30, cmd_verify=True)
+                    if "[confirm]" in config_output:  # send 'y' wehen confirm is needet (f.e Clear counters)
+                            config_output +=  ssh_session.send_command_timing('y')
+                    outputfile.write(config_output)
+                except UnboundLocalError:
+                    print(f"SSH-Error on device {hostname}")
     else:
         hostfilename = hostname +"_quick_command.txt"
         try:

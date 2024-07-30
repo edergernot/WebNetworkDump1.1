@@ -271,7 +271,7 @@ def quickcommand_execute():
     threads = ThreadPool( num_threads )
     results = threads.map( execute_quickcommand, quickdevices )
     threads.close()
-    threads.join()#
+    threads.join()
     content=get_status.get_status(devices)
     return render_template('quickcommand_execute.html', status=content )
 
