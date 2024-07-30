@@ -303,6 +303,8 @@ def import_devices():
             device_type=colums[1]
             IP=colums[2]
             username=colums[3]
+            if "IP-Address" in IP: #Exclude 1st Line
+                continue            
             device = network_device(name=hostname, ip_addr=IP, username=username, password=password, dev_id=1, enabled=True, type=device_type)
             devices.append(device)    
         return redirect('/device_view')
