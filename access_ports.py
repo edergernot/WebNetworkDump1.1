@@ -39,8 +39,11 @@ def configure_access_ports(ssh_device):
         logging.debug(f'find_access_ports Something went wrong when connecting Device')
         logging.debug(e)
     now = time.strftime("%Y%b%d_%H%M", time.localtime())
-    backup = ssh_session.send_command_timing(f"copy run flash:Backup_{now}")
+    ## Backup Running Config
+    backup = ssh_session.send_command_timing(f"copy run flash:Backup_{now}\n")
+    ssh_session.send_command(f"\n")
     logging.debug(f"Backing Up running Config:\n{backup}")
+    ## Get Interfaces
     interfaces_cmd='show interfaces status'
     int_status=ssh_session.send_command_timing(interfaces_cmd, use_textfsm=True) # get interfaces from Switch
     with open (f"{OUTPUT_DIR}/{hostname}_accessport_cfg.txt", "w") as file:
