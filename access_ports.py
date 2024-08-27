@@ -20,6 +20,7 @@ access_port_portsec=[
 
 
 def configure_access_ports(ssh_device):
+    import time
     import logging
     logging.basicConfig(level=logging.DEBUG)
     from netmiko import ConnectHandler
@@ -37,9 +38,14 @@ def configure_access_ports(ssh_device):
     except Exception as e:
         logging.debug(f'find_access_ports Something went wrong when connecting Device')
         logging.debug(e)
+    now = time.strftime("%Y%b%d_%H%M", time.localtime())
+    backup = ssh_session.send_command_timing(f"copy run flash:Backup_{now}")
+    logging.debug(f"Backing Up running Config:\n{backup}")
     interfaces_cmd='show interfaces status'
     int_status=ssh_session.send_command_timing(interfaces_cmd, use_textfsm=True) # get interfaces from Switch
     with open (f"{OUTPUT_DIR}/{hostname}_accessport_cfg.txt", "w") as file:
+        file.write(f"copy run flash:Backup_{now}\n ")
+        file.write(backup)
         # configure global ipv6 RA-Guard
         globalconfig = ssh_session.send_config_set(global_config)
         file.write(globalconfig)
