@@ -53,6 +53,8 @@ def configure_access_ports(ssh_device):
                 continue  ### configured and working as trunk
             if int_name[:2]=='Po':
                 continue  #### dont configure Portchannels
+            if int_name[:2]=='Vl':
+                continue #### dont configure Vlans
             mac_count=ssh_session.send_command_timing(f"show mac address int {int_name}", use_textfsm=True)
             if "\n------------------------" in mac_count:  #'          Mac Address Table\n-------------------------------------------\n\nVlan    Mac Address       Type        Ports\n----    -----------       --------    -----'
                 macs=mac_count.split("Ports\n")
@@ -103,6 +105,7 @@ def configure_access_ports(ssh_device):
 
 
 if __name__ == "__main__":
+    ### Used to run al single App on single Device
     from models import *
     from webnetworkdump import make_netmiko_device
     test_device= network_device(name='testdev', ip_addr='1.1.1.1', username='usern', password='password',type='cisco_ios',dev_id=1) 
