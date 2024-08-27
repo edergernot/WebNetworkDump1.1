@@ -22,7 +22,7 @@ access_port_portsec=[
 def configure_access_ports(ssh_device):
     import time
     import logging
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG) # Needet for debugging
     from netmiko import ConnectHandler
     import logging
     OUTPUT_DIR='./quickcommand'
@@ -31,25 +31,25 @@ def configure_access_ports(ssh_device):
     logging.debug (f'Try to connect to {hostname}')
     dev_type=ssh_device['device_type']
     logging.debug(f'Conneced to Device {hostname}')
-    if dev_type != 'cisco_ios':  # only used on Cisco IOS devices
+    if dev_type != 'cisco_ios':  # only run on Cisco IOS devices
         return
     try:
         ssh_session = ConnectHandler(**ssh_device)
     except Exception as e:
         logging.debug(f'find_access_ports Something went wrong when connecting Device')
         logging.debug(e)
+    ### Backup Running Config
     now = time.strftime("%Y%b%d_%H%M", time.localtime())
-    ## Backup Running Config
     backup = ssh_session.send_command_timing(f"copy run flash:Backup_{now}\n")
     ssh_session.send_command(f"\n")
-    logging.debug(f"Backing Up running Config:\n{backup}")
-    ## Get Interfaces
+    logging.debug(f"Backing Up running Config:\n{backup}\n")
+    ### Get Interfaces
     interfaces_cmd='show interfaces status'
     int_status=ssh_session.send_command_timing(interfaces_cmd, use_textfsm=True) # get interfaces from Switch
     with open (f"{OUTPUT_DIR}/{hostname}_accessport_cfg.txt", "w") as file:
         file.write(f"copy run flash:Backup_{now}\n ")
-        file.write(backup)
-        # configure global ipv6 RA-Guard
+        file.write(f"{backup}\n")
+        ### configure global ipv6 RA-Guard
         globalconfig = ssh_session.send_config_set(global_config)
         file.write(globalconfig)
         for int in int_status:
@@ -61,9 +61,9 @@ def configure_access_ports(ssh_device):
             if int['vlan']=='trunk':
                 continue  ### configured and working as trunk
             if int_name[:2]=='Po':
-                continue  #### dont configure Portchannels
+                continue  ### dont configure Portchannels
             if int_name[:2]=='Vl':
-                continue #### dont configure Vlans
+                continue ### dont configure Vlans
             mac_count=ssh_session.send_command_timing(f"show mac address int {int_name}", use_textfsm=True)
             if "\n------------------------" in mac_count:  #'          Mac Address Table\n-------------------------------------------\n\nVlan    Mac Address       Type        Ports\n----    -----------       --------    -----'
                 macs=mac_count.split("Ports\n")
@@ -77,12 +77,12 @@ def configure_access_ports(ssh_device):
                     print (f"Error: {e}")
             if len(mac_count)>=2:
                 MacSec = False  ### Dont enable MAC-sec, more than 2 Addesses found
-            #### Get Interface config
+            ### Get Interface config
             portconfig = ssh_session.send_command_timing(f"show run interface {int_name}")
             file.write(portconfig)
             ### Check Interface config for keywords
-            for line in portconfig:
-                if "mode trunk" in line:
+            for line in portconfig.split("\n"):
+                if "switchport mode trunk" in line:
                     AccessPort=False
                 if "channel-group" in line:
                     AccessPort=False
@@ -114,15 +114,9 @@ def configure_access_ports(ssh_device):
 
 
 if __name__ == "__main__":
-    ### Used to run al single App on single Device
+    ### Used to run as single App on single Device
     from models import *
     from webnetworkdump import make_netmiko_device
     test_device= network_device(name='testdev', ip_addr='1.1.1.1', username='usern', password='password',type='cisco_ios',dev_id=1) 
     ssh_device=make_netmiko_device(test_device)
     configure_access_ports(ssh_device)
-
-
-
-
-
-
