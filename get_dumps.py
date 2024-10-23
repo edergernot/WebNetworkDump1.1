@@ -393,8 +393,13 @@ def dump_with_textfsm(device): # get commands from NTC-Templates and dump these.
     with open(f"{template_dir}\index") as f:
         ntc_index=f.read()
     TEXTFSM_commands=[]
-    dev_vendor = device["device_type"].split("_")[0]
-    dev_os = device["device_type"].split("_")[1]
+    try:
+        dev_vendor = device["device_type"].split("_")[0]
+        dev_os = device["device_type"].split("_")[1]
+    except Exception as e:
+        logging.debug(f'get_dumps.dump_with_textfsm: Something went wrong with Device, {device}')
+        logging.debug(e)
+        return
     for line in ntc_index.splitlines():
         ntc_vendor = line.split("_")[0]
         if ntc_vendor == dev_vendor:
