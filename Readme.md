@@ -46,3 +46,24 @@ Download
 
 Dumpfile
 ![Dumpfile](images/Zipfile.png)
+
+
+### Quickinstall with UV
+```
+git clone https://github.com/edergernot/WebNetworkDump1.1
+cd WebNetworkDump1.1
+```
+
+### Install UV packetmanger
+```
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+### Create Virtual Environment
+```
+uv venv --python 3.10.0
+.venv/bin/activate
+uv pip install -r requirements.txt
+```
+
+
+
