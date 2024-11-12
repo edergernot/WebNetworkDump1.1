@@ -55,15 +55,22 @@ cd WebNetworkDump1.1
 ```
 
 ### Install UV packetmanger
+Powershell
 ```
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+WSL or Git Bash
+```
+curl -LsSf https://astral.sh/uv/install.sh |sh
 ```
 ### Create Virtual Environment
 ```
 uv venv --python 3.10.0
-.venv/bin/activate
+.venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
-
-
+### Run App
+```
+python webnetworkdump.py
+```
 
