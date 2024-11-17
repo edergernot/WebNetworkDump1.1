@@ -15,6 +15,7 @@ import shutil
 from get_dumps import *
 from get_quickcommands import *
 from access_ports import *
+from dhcp_snooping import *
 from multiprocessing.dummy import Pool as ThreadPool
 import json
 
@@ -228,6 +229,37 @@ def download_dump():
     shutil.make_archive("./output/NetworkDump", 'zip', "./dump")
     output_path = "./output/NetworkDump.zip"
     return send_file(output_path, as_attachment=True)#
+
+@app.route("/dhcp") # shows spinning weel and starts job
+def dhcp_loading():
+    global  devices
+    ena_devices = enabled_devices(devices)
+    content=get_status.get_status(devices)
+    number_ena_devices = len(ena_devices)
+    logging.debug(f'webnetworkdump.dhcp. Number of Hosts in Network: {number_ena_devices}')
+    return render_template('dhcp_loading.html', status=content, text=f'One moment please!\nSearching and configuring Access-Ports on {number_ena_devices} devices ...')
+
+
+@app.route("/dhcp_execute")   
+def dhcp_execute():
+    accessdevices =[]
+    global devices
+    ena_devices = enabled_devices(devices)
+    number_ena_devices = len(ena_devices)
+    for dev in ena_devices:  # prepair devices for quickcommand worker
+        accessdevice=make_netmiko_device(dev)
+        accessdevices.append(accessdevice)
+    if number_ena_devices < 30 :
+        num_threads=len(ena_devices)
+    else:
+        num_threads=30
+    threads = ThreadPool( num_threads )
+    results = threads.map( configure_dhcpsnooping, accessdevices )
+    threads.close()
+    threads.join()
+    content=get_status.get_status(devices)
+    return render_template('dhcp_execute.html', status=content )
+
 
 @app.route("/access") # shows spinning weel and starts job
 def access_loading():
