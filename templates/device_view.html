@@ -1,7 +1,32 @@
 {% extends "layout.html" %}
+<style>
+    .connected {
+        color: green;
+        font-weight: bold;
+    }
+    .disconnected {
+        color: red;
+        font-weight: bold;
+    }
+    .enabled {
+        color: blue;
+        font-weight: bold;
+    }
+    .disabled {
+        color: gray;
+        font-weight: bold;
+    }
+</style>
 {% block content %}
     <h3> Device Overview </h3>
-    <form action="save_activation" method="POST">
+    <form method="POST" action="/device_view" style="display:inline;">
+        <input type="hidden" name="action" value="export_devices">
+        <button type="submit">Export Devices</button>
+    </form>
+    <form method="POST" action="/device_view" style="display:inline;">
+        <input type="hidden" name="action" value="import_devices">
+        <button type="submit">Import Devices</button>
+    </form>
         <table class="table table-bordered table-hover table-sm">
             <thead>
                 <tr>
@@ -10,6 +35,7 @@
                     <th>Username</th>
                     <th>Type</th>
                     <th>Enabled</th>
+                    <th>Connectivity</th>
                 </tr>
             </thead>
             <thead>
@@ -21,18 +47,47 @@
                             <td>{{ device.username }}</td>
                             <td>{{ device.type }}</td>
                             <td>
-                                <input type="checkbox" name="enabled_{{ device.ip_addr }}" {% if device.enabled %}checked{% endif %}>
+                                {% if device.enabled %}
+                                <span class="enabled">✅Enabled</span>
+                                {% else %}
+                                <span class="disabled">❌Disabled</span>
+                                {% endif %}
+                                <form method="POST" action="/device_view" style="display:inline;">
+                                    <input type="hidden" name="action" value="toggle_device">
+                                    <input type="hidden" name="device_ip" value="{{ device.ip_addr}}">
+                                    <button type="submit">
+                                        {% if device.enabled %}
+                                        Disable
+                                        {% else %}
+                                        Enable
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                {% if device.connected %}
+                                <span class="connected">↔ Connected</span>
+                                {% else %}
+                                <span class="disconnected">⇼ Disconnected</span>
+                                {% endif %}
                             </td>
                         </tr>
                     </tbody>    
                 {% endfor %}
             </thead>
         </table>
-        <label for="enable_all">Enable All:</label>
-        <input type="checkbox" name="enable_all">
-        <label for="disable_all">Disable All:</label>
-        <input type="checkbox" name="disable_all">
-        <br>
-        <button type="submit">save settings</button>
+        
+    <form method="POST" action="/device_view">
+        <input type="hidden" name="action" value="test_connectivity">
+        <button type="submit">Test Connectivity</button>
     </form>
+    <form method="POST" action="/device_view" style="display:inline;">
+        <input type="hidden" name="action" value="enable_all">
+        <button type="submit">Enable All Devices</button>
+    </form>
+    <form method="POST" action="/device_view" style="display:inline;">
+        <input type="hidden" name="action" value="disable_all">
+        <button type="submit">Disable All Devices</button>
+    </form>
+    
 {% endblock content %}

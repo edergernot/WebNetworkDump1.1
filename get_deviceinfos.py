@@ -51,14 +51,14 @@ def ssh_worker(IP):
     if device_type == "hp_comware":
         hostname=hostname[1:]
     device = network_device(name=hostname, ip_addr=IP, username=username, password=password, 
-                            dev_id=1, enabled=True, type=device_type)
+                            dev_id=1, enabled=True, type=device_type, connected=True)
     logging.debug(f'get_deviceinfos.ssh_worker. hostname = {hostname}, Type = {device_type}')
     devices.append(device)
     logging.debug(f'get_deviceinfos.ssh_worker. Device: {device.name} with IP: {device.ip_addr} added')
     
 
 def ssh_login(ip_network, user, passwd):
-    ''' try to login with Nertmiko and detect Device'''
+    ''' try to login with Netmiko and detect Device'''
     global username, password, devices
     username = user
     password = passwd

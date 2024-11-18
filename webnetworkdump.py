@@ -67,6 +67,37 @@ def enabled_devices(devices):
             ena_devices.append(device)
     return(ena_devices)
 
+def test_connectivity():
+    global devices
+    if len(devices) <= 30 :
+        num_threads=len(devices)
+    else:
+        num_threads=30
+    threads = ThreadPool( num_threads )
+    results = threads.map( test_logon, devices )
+    threads.close()
+    threads.join()
+    
+def test_logon(device):
+    global devices
+    testdevice =  {'device_type': device.type, 'ip':device.ip_addr, 'username':device.username, 'password':device.password}
+    try: 
+        ssh_session = ConnectHandler(**testdevice)
+        hostname = ssh_session.find_prompt()
+        print (f'connected to {hostname}')
+    except Exception as E:
+        print (f"Error turing login to device: {device.name} {device.ip_addr}:\n{E}\n")
+        for dev in devices:
+            if dev.ip_addr==device.ip_addr:
+                dev.connected = False
+                dev.enabled = False
+                return
+    for dev in devices:
+            if dev.ip_addr==device.ip_addr:
+                dev.connected = True
+    return
+    
+
 @app.route("/")
 def index():
     global devices
@@ -117,25 +148,42 @@ def trylogon():
     content=get_status.get_status(devices)
     return render_template("index.html",status=content)
 
-@app.route("/device_view")
+@app.route("/device_view", methods=['GET', 'POST'])
 def device_view():
     global devices
+    if request.method == 'POST':
+        # Handle "Test Connectivity" action
+        if request.form.get('action') == 'test_connectivity':
+            test_connectivity()
+        
+        # Handle "Enable/Disable" toggle for a specific device
+        elif request.form.get('action') == 'toggle_device':
+            device_ip = request.form.get('device_ip')
+            for device in devices:
+                if device.ip_addr == device_ip:
+                    device.enabled = not device.enabled  # Toggle enabled status
+                    break
+        
+        # Handle "Enable All" action
+        elif request.form.get('action') == 'enable_all':
+            for device in devices:
+                device.enabled = True  # Set all devices to enabled
+                       
+        # Handle "Disable All" action
+        elif request.form.get('action') == 'disable_all':
+            for device in devices:
+                device.enabled = False  # Set all devices to disabled
+
+        # Handle "Export Devices" action
+        elif request.form.get('action') == 'export_devices':
+            write_device_file(devices)
+            output_path = f"{DUMP_DIR}/device_file.csv"
+            return send_file(output_path, as_attachment=True)
+
     logging.debug(f'webnetworkdump.device_view. Device-Objects in View: {devices}')
     content=get_status.get_status(devices)
     return render_template("/device_view.html", status=content, devices=devices)
 
-@app.route("/save_activation", methods=['POST'])
-def save_activation():
-    enable_all = bool(request.form.get('enable_all'))
-    disable_all = bool(request.form.get('disable_all'))
-    for device in devices:
-        if enable_all:
-            device.enabled = True
-        elif disable_all:
-            device.enabled = False
-        else:
-            device.enabled = bool(request.form.get(f'enabled_{device.ip_addr}'))
-    return redirect(url_for('device_view'))
 
 @app.route("/dump_loading")
 def dump_loading():
