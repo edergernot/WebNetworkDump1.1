@@ -4,6 +4,8 @@
 ./output*
 ./venv*
 ./venv/*
+./upload*
+./upload/
 ./__pycache__*
 ./__pycache__/*
 ./__pycache__
