@@ -19,7 +19,7 @@ win_venv/
 dump/*
 output/*
 quickcommand/*
-
+upload/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
