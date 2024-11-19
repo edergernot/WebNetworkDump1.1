@@ -8,3 +8,5 @@ dump_data = {}
 excelfiles = 0
 config_files = 0
 data={}
+ALLOWED_EXTENSIONS = {'csv'}
+UPLOAD_FOLDER = './dump'

@@ -2,6 +2,7 @@ from models import network_device
 from netmiko import ConnectHandler, SSHDetect
 import os
 from flask import Flask, render_template, flash, url_for, redirect, send_file, request
+from werkzeug.utils import secure_filename
 from wtforms.form import FormMeta
 from wtforms.validators import HostnameValidation
 from forms import DeviceDiscoveryForm, QuickCommand, PasswordForm
@@ -26,6 +27,7 @@ logging.basicConfig(level=logging.ERROR)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '50421D352F92E548C6AC0147380F58BC'  # used to avoid TCP-Highjacking in Flask
+app.config['UPLOAD_FOLDER'] = "./upload"
 global_quickcommands = {}
 
 def add_to_data(key, parsed, hostname, vrf='NONE'):
@@ -97,6 +99,9 @@ def test_logon(device):
                 dev.connected = True
     return
     
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/")
 def index():
@@ -179,11 +184,40 @@ def device_view():
             write_device_file(devices)
             output_path = f"{DUMP_DIR}/device_file.csv"
             return send_file(output_path, as_attachment=True)
+        
+        # Handle "Export Devices" action
+        elif request.form.get('action') == 'import_devices':
+            return redirect("/upload")
 
     logging.debug(f'webnetworkdump.device_view. Device-Objects in View: {devices}')
     content=get_status.get_status(devices)
     return render_template("/device_view.html", status=content, devices=devices)
 
+@app.route("/upload", methods=['GET', 'POST'])
+def upload():
+    '''Select file for upload and upload it.'''
+    content=get_status.get_status(devices)
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect('/upload')
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect('/upload')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # delete Upload Folder
+            if os.path.exists("./upload"):
+                shutil.rmtree("./upload", ignore_errors=False, onerror=None)
+            path = os.path.join("./","upload")
+            os.mkdir(path)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect('/import')
+    return render_template("/upload.html",status=content)
 
 @app.route("/dump_loading")
 def dump_loading():
@@ -287,8 +321,7 @@ def dhcp_loading():
     logging.debug(f'webnetworkdump.dhcp. Number of Hosts in Network: {number_ena_devices}')
     return render_template('dhcp_loading.html', status=content, text=f'One moment please!\nSearching and configuring Access-Ports on {number_ena_devices} devices ...')
 
-
-@app.route("/dhcp_execute")   
+@app.route("/dhcp_execute")   # sets dhcp-snooping on selected devices
 def dhcp_execute():
     accessdevices =[]
     global devices
@@ -307,7 +340,6 @@ def dhcp_execute():
     threads.join()
     content=get_status.get_status(devices)
     return render_template('dhcp_execute.html', status=content )
-
 
 @app.route("/access") # shows spinning weel and starts job
 def access_loading():
@@ -396,14 +428,14 @@ def quickcommands_download():
 def import_devices():
     # Import Devices from device_file
     # Device file is from previous discovery and ony 1 Password is supported
-    # Quick and dirty method
     from models import network_device
     global  devices
     content=get_status.get_status(devices)
     form = PasswordForm()
     if form.validate_on_submit():
         password=form.password.data
-        with open('./dump/device_file.csv') as f:
+        file = os.listdir("./upload")
+        with open(f'./upload/{file[0]}') as f:
             file = f.read()
         for line in file.split('\n'):
             colums=line.split(',')
@@ -415,7 +447,7 @@ def import_devices():
             username=colums[3]
             if "IP-Address" in IP: #Exclude 1st Line
                 continue            
-            device = network_device(name=hostname, ip_addr=IP, username=username, password=password, dev_id=1, enabled=True, type=device_type)
+            device = network_device(name=hostname, ip_addr=IP, username=username, password=password, dev_id=1, enabled=True, type=device_type, connected=True)
             devices.append(device)    
         return redirect('/device_view')
     return render_template("import.html", form=form, title="Device Import", status=content)
@@ -436,6 +468,11 @@ def delete():
         shutil.rmtree("./quickcommand", ignore_errors=False, onerror=None)
     #create empty quickdump directory
     path = os.path.join("./","quickcommand")
+    os.mkdir(path) #delete upload directory
+    if os.path.exists("./upload"):
+        shutil.rmtree("./upload", ignore_errors=False, onerror=None)
+    #create empty upload directory
+    path = os.path.join("./","upload")
     os.mkdir(path) #delete dump directory
     global devices 
     devices = []
@@ -451,17 +488,23 @@ def delete_files():
         shutil.rmtree("./dump", ignore_errors=False, onerror=None)
     #create empty dump directory
     path = os.path.join("./","dump")
-    os.mkdir(path) #delete dump directory
+    os.mkdir(path) 
     if os.path.exists("./output"):
         shutil.rmtree("./output", ignore_errors=False, onerror=None)
     #create empty dump directory
     path = os.path.join("./","output")
-    os.mkdir(path) #delete quickdump directory
+    os.mkdir(path) 
     if os.path.exists("./quickcommand"):
         shutil.rmtree("./quickcommand", ignore_errors=False, onerror=None)
     #create empty quickdump directory
     path = os.path.join("./","quickcommand")
-    os.mkdir(path) #delete dump directory
+    os.mkdir(path) 
+    #delete upload directory
+    if os.path.exists("./upload"):
+        shutil.rmtree("./upload", ignore_errors=False, onerror=None)
+    #create empty upload directory
+    path = os.path.join("./","upload")
+    os.mkdir(path) 
     content=get_status.get_status(devices)
     return render_template("index.html",status=content)
 
