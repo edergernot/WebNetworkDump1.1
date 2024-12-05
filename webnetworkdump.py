@@ -233,7 +233,6 @@ def device_view():
 
 @app.route("/webssh/<string:device_ip>") # Connect to WebSSH-Server on localhost
 def webssh(device_ip):
-    print ("WebSSH")
     global devices
     for device in devices:
         if device.ip_addr == device_ip:
