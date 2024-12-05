@@ -10,12 +10,12 @@ def execute_quickcommand(device):
     quickcommands = device.pop('commands')
     commands = quickcommands.split("\n")
     config=device.pop('config')
-    logging.debug(f'get_dumps.dump_cisco_ios: Try to Connect to {hostname}')
+    logging.debug(f'get_quickcommands.execute_quickcommand: Try to Connect to {hostname}')
     try:
         ssh_session = ConnectHandler(**device)
-        logging.debug(f"get_dumps.dump_cisco_ios: Connected to {ssh_session.find_prompt()}")
+        logging.debug(f"get_quickcommands.execute_quickcommand: Connected to {ssh_session.find_prompt()}")
     except Exception as e:
-        logging.debug(f'get_dumps.dump_cisco_ios: Something went wrong when connecting Device')
+        logging.debug(f'get_quickcommands.execute_quickcommand: Something went wrong when connecting Device')
         logging.debug(e)
     if config:
         hostfilename = hostname +"_quick_config.txt"
@@ -50,7 +50,7 @@ def execute_quickcommand(device):
                     outputfile.write("*"*40)
                     outputfile.write("\n")
         except Exception as e:
-            logging.debug('get_quickcommands.dump_cisco_ios: Somthing went wrong with sending commands')
+            logging.debug('get_quickcommands.execute_quickcommand: Somthing went wrong with sending commands')
             logging.debug(e)
     return
 
