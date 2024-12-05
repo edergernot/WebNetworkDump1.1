@@ -18,6 +18,12 @@
     }
 </style>
 {% block content %}
+    <script>
+        function openInNewTab(url) {
+            // Open the URL in a new browser tab
+            window.open(url, '_blank');
+        }
+    </script>
     <h3> Device Overview </h3>
     <form method="POST" action="/device_view" style="display:inline;">
         <input type="hidden" name="action" value="export_devices">
@@ -36,6 +42,7 @@
                     <th>Type</th>
                     <th>Enabled</th>
                     <th>Connectivity</th>
+                    <th>SSH</th>
                 </tr>
             </thead>
             <thead>
@@ -70,6 +77,9 @@
                                 {% else %}
                                 <span class="disconnected">⇼ Disconnected</span>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <button onclick="openInNewTab('{{ url_for('webssh', device_ip=device.ip_addr) }}')">SSH</button>
                             </td>
                         </tr>
                     </tbody>    

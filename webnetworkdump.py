@@ -18,7 +18,10 @@ from get_quickcommands import *
 from access_ports import *
 from dhcp_snooping import *
 from multiprocessing.dummy import Pool as ThreadPool
+from subprocess import Popen, PIPE
 import json
+import threading
+import base64
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -29,6 +32,22 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '50421D352F92E548C6AC0147380F58BC'  # used to avoid TCP-Highjacking in Flask
 app.config['UPLOAD_FOLDER'] = "./upload"
 global_quickcommands = {}
+
+
+def start_webssh_server():
+    """Start the WebSSH server in a background thread."""
+    try:
+        Popen([
+            'wssh'
+        ], stdout=PIPE, stderr=PIPE)
+        print(f"WebSSH server started!")
+    except FileNotFoundError:
+        print("Error: 'wssh' command not found. Ensure WebSSH is installed and in PATH.")
+    except Exception as e:
+        print(f"Failed to start WebSSH server: {e}")
+# Start the WebSSH server when Flask starts
+threading.Thread(target=start_webssh_server, daemon=True).start()
+
 
 def add_to_data(key, parsed, hostname, vrf='NONE'):
     global data
@@ -164,11 +183,21 @@ def device_view():
         # Handle "Enable/Disable" toggle for a specific device
         elif request.form.get('action') == 'toggle_device':
             device_ip = request.form.get('device_ip')
+            print (f"ENABLE: {device_ip}")
             for device in devices:
                 if device.ip_addr == device_ip:
                     device.enabled = not device.enabled  # Toggle enabled status
                     break
-        
+        # Handle "WebSSH" to device
+        elif request.form.get('action') == 'webssh':
+            device_ip = request.form.get('device_ip')
+            print(f'SSH: {device_ip}')
+            for device in devices:
+                if device.ip_addr == device_ip:
+                    print (device)
+                    webssh_url = f'http://{WEBSSH_HOST}:{WSSH_PORT}/?hostname={device.ip_addr}&username={device.user}&password={base64.b64encode(device.password)}'
+                    return redirect(webssh_url)
+                    
         # Handle "Enable All" action
         elif request.form.get('action') == 'enable_all':
             for device in devices:
@@ -189,9 +218,32 @@ def device_view():
         elif request.form.get('action') == 'import_devices':
             return redirect("/upload")
 
+    if request.form.get('action') == 'webssh':
+            device_ip = request.form.get('device_ip')
+            print(f'SSH: {device_ip}')
+            for device in devices:
+                if device.ip_addr == device_ip:
+                    print (device)
+                    webssh_url = f'http://{WEBSSH_HOST}:{WSSH_PORT}/?hostname={device.ip_addr}&username={device.user}&password={base64.b64encode(device.password)}'
+                    return redirect(webssh_url)
+
     logging.debug(f'webnetworkdump.device_view. Device-Objects in View: {devices}')
     content=get_status.get_status(devices)
     return render_template("/device_view.html", status=content, devices=devices)
+
+@app.route("/webssh/<string:device_ip>") # Connect to WebSSH-Server on localhost
+def webssh(device_ip):
+    print ("WebSSH")
+    global devices
+    for device in devices:
+        if device.ip_addr == device_ip:
+            user = device.username
+            password = device.password
+            pwd = base64.urlsafe_b64encode(password.encode('utf-8'))
+            pwd64 = pwd.decode('utf-8')
+            webssh_host = request.host.split(':')[0]  
+            webssh_url = f"http://{webssh_host}:8888/?hostname={device_ip}&username={user}&password={pwd64}"
+            return redirect(webssh_url)
 
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
