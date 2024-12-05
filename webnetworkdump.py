@@ -188,16 +188,6 @@ def device_view():
                 if device.ip_addr == device_ip:
                     device.enabled = not device.enabled  # Toggle enabled status
                     break
-        # Handle "WebSSH" to device
-        elif request.form.get('action') == 'webssh':
-            device_ip = request.form.get('device_ip')
-            print(f'SSH: {device_ip}')
-            for device in devices:
-                if device.ip_addr == device_ip:
-                    print (device)
-                    webssh_url = f'http://{WEBSSH_HOST}:{WSSH_PORT}/?hostname={device.ip_addr}&username={device.user}&password={base64.b64encode(device.password)}'
-                    return redirect(webssh_url)
-                    
         # Handle "Enable All" action
         elif request.form.get('action') == 'enable_all':
             for device in devices:
@@ -217,15 +207,6 @@ def device_view():
         # Handle "Export Devices" action
         elif request.form.get('action') == 'import_devices':
             return redirect("/upload")
-
-    if request.form.get('action') == 'webssh':
-            device_ip = request.form.get('device_ip')
-            print(f'SSH: {device_ip}')
-            for device in devices:
-                if device.ip_addr == device_ip:
-                    print (device)
-                    webssh_url = f'http://{WEBSSH_HOST}:{WSSH_PORT}/?hostname={device.ip_addr}&username={device.user}&password={base64.b64encode(device.password)}'
-                    return redirect(webssh_url)
 
     logging.debug(f'webnetworkdump.device_view. Device-Objects in View: {devices}')
     content=get_status.get_status(devices)
