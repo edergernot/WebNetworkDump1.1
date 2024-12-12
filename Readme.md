@@ -14,7 +14,7 @@ see: https://github.com/networktocode/ntc-templates/blob/master/ntc_templates/te
 ## Easystart with DockerContainer on local maschine!
 
 - Get Container from Dockerhub
-  - ```docker run -p 5000:5000 edergernot/webnetworkdump```
+  - ```docker run -p 5000:5000 -p 8888:8888 edergernot/webnetworkdump```
 
 - Start dumping the Network and browse to:
   - ```http://localhost:5000```

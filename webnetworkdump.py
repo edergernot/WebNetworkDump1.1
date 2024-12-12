@@ -46,7 +46,7 @@ def start_webssh_server():
     except Exception as e:
         print(f"Failed to start WebSSH server: {e}")
 # Start the WebSSH server when Flask starts
-threading.Thread(target=start_webssh_server, daemon=True).start()
+
 
 
 def add_to_data(key, parsed, hostname, vrf='NONE'):
@@ -549,4 +549,5 @@ def about():
 
 
 if __name__ == "__main__":
+    threading.Thread(target=start_webssh_server, daemon=True).start()
     app.run(host="0.0.0.0", debug=False)   # 0.0.0.0 Needet when Container is used
