@@ -551,4 +551,4 @@ def about():
 
 if __name__ == "__main__":
     threading.Thread(target=start_webssh_server, daemon=True).start()
-    app.run(host="0.0.0.0", debug=True)   # 0.0.0.0 Needet when Container is used
+    app.run(host="0.0.0.0", debug=False)   # 0.0.0.0 Needet when Container is used
