@@ -37,16 +37,16 @@ global_quickcommands = {}
 def start_webssh_server():
     """Start the WebSSH server in a background thread."""
     try:
-        Popen([
-            'wssh'
-        ], stdout=PIPE, stderr=PIPE)
+        command=["wssh", "--fbidhttp=False"]
+        Popen(command, stdout=PIPE, stderr=PIPE)
         print(f"WebSSH server started!")
     except FileNotFoundError:
         print("Error: 'wssh' command not found. Ensure WebSSH is installed and in PATH.")
     except Exception as e:
         print(f"Failed to start WebSSH server: {e}")
-# Start the WebSSH server when Flask starts
 
+# Start the WebSSH server when Flask starts
+# threading.Thread(target=start_webssh_server, daemon=True).start()
 
 
 def add_to_data(key, parsed, hostname, vrf='NONE'):
@@ -222,6 +222,7 @@ def webssh(device_ip):
             pwd = base64.urlsafe_b64encode(password.encode('utf-8'))
             pwd64 = pwd.decode('utf-8')
             webssh_host = request.host.split(':')[0]  
+            print(webssh_host)
             webssh_url = f"http://{webssh_host}:8888/?hostname={device_ip}&username={user}&password={pwd64}"
             return redirect(webssh_url)
 
