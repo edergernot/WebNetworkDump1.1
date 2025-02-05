@@ -132,7 +132,32 @@ HP_COMWARE_COMMANDS = ["display clock",
                        ""
                        ]
 
-
+WLC_9800_COMMANDS = ["show ap summary",
+    "show ap summary sort ascending client-count",
+    "show ap cdp neighbors",
+    "show ap lldp neighbors",
+    "show ap dot11 24ghz summary",
+    "show ap dot11 5ghz summary",
+    "show ap dot11 6ghz summary",
+    "show ap auto-rf dot11 24ghz",
+    "show ap auto-rf dot11 5ghz",
+    "show ap auto-rf dot11 6ghz",
+    "show ap name <ap_name> inventory",
+    "show ap name <ap_name> tag detail",
+    "show ap name <ap_name> config general",
+    "show ap name <ap_name> config dot11 24ghz",
+    "show ap name <ap_name> config dot11 5ghz",
+    "show ap name <ap_name> config dot11 6ghz",
+    "show ap name <ap_name> config dot11 dual-band",
+    "show ap name <ap_name> channel",
+    "show ap name <ap_name> gps location",
+    "show chassis",
+    "show wireless stats ap history",
+    "show wireless client summary",
+    "show wireless client mac-address <client_mac> detail",
+    "show wlan summary",
+    "show wlan id <wlan_id>",
+    "show wlan id <wlan_id> client stats"]
 
 from netmiko import ConnectHandler
 import logging
@@ -191,6 +216,10 @@ def dump_cisco_ios(device):
                         vrf_enabled = True
                         vrf_output = commandoutput
                         logging.debug('get_dumps:dump_cisco_ios: VRF enabled')
+                if command == "show version":
+                    if "C9800_IOSXE-K9" in commandoutput:
+                        wlc_enabled = True
+                        logging.debug('get_dumps:dump_cisco_ios: WLC enabled')  
                 outputfile.write(commandoutput) 
                 outputfile.write("\n")
                 outputfile.write("*"*40)
@@ -217,6 +246,78 @@ def dump_cisco_ios(device):
                         outputfile.write("\n")
                         outputfile.write("*"*40)
                         outputfile.write("\n")
+            if wlc_enabled:
+                ap_name=[]
+                client_mac=[]
+                wlan_id=[]
+                for command in WLC_9800_COMMANDS:
+                    wlccommmand = command
+                    if "<ap_name>" in command:
+                        for ap in ap_name:
+                            wlccommmand = command.replace("<ap_name>", ap)
+                            outputfile.write(wlccommmand)
+                            outputfile.write("\n")
+                            outputfile.write("**"+"-"*40+"**")
+                            outputfile.write("\n")
+                            commandoutput = ssh_session.send_command(wlccommmand)
+                            outputfile.write(commandoutput) 
+                            outputfile.write("\n")
+                            outputfile.write("*"*40)
+                            outputfile.write("\n")
+                        continue
+                    if "<client_mac>" in command:
+                        for mac in client_mac:
+                            wlccommmand = command.replace("<client_mac>", mac)
+                            outputfile.write(wlccommmand)
+                            outputfile.write("\n")
+                            outputfile.write("**"+"-"*40+"**")
+                            outputfile.write("\n")
+                            commandoutput = ssh_session.send_command(wlccommmand)
+                            outputfile.write(commandoutput) 
+                            outputfile.write("\n")
+                            outputfile.write("*"*40)
+                            outputfile.write("\n") 
+                        continue
+                    if "<wlan_id>" in command:
+                        for id in wlan_id:
+                            wlccommmand = command.replace("<wlan_id>", id)
+                            outputfile.write(wlccommmand)
+                            outputfile.write("\n")
+                            outputfile.write("**"+"-"*40+"**")
+                            outputfile.write("\n")
+                            commandoutput = ssh_session.send_command(wlccommmand)
+                            outputfile.write(commandoutput) 
+                            outputfile.write("\n")
+                            outputfile.write("*"*40)
+                            outputfile.write("\n")  
+                        continue
+                    if command == "show ap summary":
+                        ap_output = ssh_session.send_command(command)
+                        for line in ap_output.split("\n"):
+                            if "Name" in line:
+                                continue
+                            ap_name.append(line.split(" ")[0]) 
+                    if command == "show wireless client summary":
+                        client_output = ssh_session.send_command(command)
+                        for line in client_output.split("\n"):
+                            if "MAC" in line:
+                                continue
+                            client_mac.append(line.split(" ")[0])
+                    if command == "show wlan summary":
+                        wlan_output = ssh_session.send_command(command)
+                        for line in wlan_output.split("\n"):
+                            if "ID" in line:
+                                continue
+                            wlan_id.append(line.split(" ")[0])  
+                    outputfile.write(command)
+                    outputfile.write("\n")
+                    outputfile.write("**"+"-"*40+"**")
+                    outputfile.write("\n")
+                    commandoutput = ssh_session.send_command(command)
+                    outputfile.write(commandoutput)
+                    outputfile.write("\n")
+                    outputfile.write("*"*40)
+                    outputfile.write("\n")                    
     except Exception as e:
         logging.debug('get_dumps.dump_cisco_ios: Somthing went wrong with sending commands')
         logging.debug(e)

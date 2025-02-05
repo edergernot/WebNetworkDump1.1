@@ -16,6 +16,7 @@ COPY  *.py ./
 COPY  templates ./templates/
 COPY  static ./static
 
-EXPOSE 5000 8888
+EXPOSE 5000 
+EXPOSE 8888
 
 CMD [ "python", "./webnetworkdump.py" ]
