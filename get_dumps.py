@@ -133,7 +133,7 @@ HP_COMWARE_COMMANDS = ["display clock",
                        ]
 
 WLC_9800_COMMANDS = ["show ap summary",
-    "show ap summary sort ascending client-count",
+    "show ap summary sort descending client-count",
     "show ap cdp neighbors",
     "show ap lldp neighbors",
     "show ap dot11 24ghz summary",
