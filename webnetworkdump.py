@@ -22,6 +22,7 @@ from subprocess import Popen, PIPE
 import json
 import threading
 import base64
+from csv import DictWriter
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -121,6 +122,23 @@ def test_logon(device):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def create_csv_files(data):
+    for key in data.keys():
+        filename = f"{DUMP_DIR}/{key}.csv"
+        with open(filename,"w") as output:
+            rows = list(data[key])
+            if len(rows) == 0:
+                continue
+            writer = DictWriter(output, fieldnames=rows[0].keys())
+            writer.writeheader()
+            try:
+                writer.writerows(rows)
+            except Exception as e:
+                print(f"Error writing CSV file {key}.csv: {e}")   
+                continue
+            
+
 
 @app.route("/")
 def index():
@@ -335,8 +353,10 @@ def dump():
     # print(data)  
     with open (f'{DUMP_DIR}/parsed_data.json' , 'w') as file:
         file.write(json.dumps(data, indent=4))               
-    content=get_status.get_status(devices)
-    return render_template('parse.html', status=content) 
+    content=get_status.get_status(devices)    
+    create_csv_files(data)
+    return render_template('parse.html', status=content)
+
  
 @app.route("/download_dump")
 def download_dump():

@@ -42,6 +42,7 @@ COMMANDS = ["show clock",
             "show vtp password",
             "show mka summary",
             "show authentication sessions",
+            "show ip dhcp shooping",
             ]
 
 VRF_COMMANDS = ["show ip route vrf <VRF>",
