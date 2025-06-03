@@ -126,7 +126,7 @@ def allowed_file(filename):
 def create_csv_files(data):
     for key in data.keys():
         filename = f"{DUMP_DIR}/{key}.csv"
-        with open(filename,"w") as output:
+        with open(filename,"w",newline='') as output:
             rows = list(data[key])
             if len(rows) == 0:
                 continue
