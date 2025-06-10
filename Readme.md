@@ -66,7 +66,7 @@ curl -LsSf https://astral.sh/uv/install.sh |sh
 ### Create Virtual Environment
 ```
 uv venv --python 3.11
-source .venv\Scripts\activate   [Win]
+.venv\Scripts\activate   [Win]
 source .venv/Scripts/activate   [Linux]
 uv pip install -r requirements.txt
 ```
