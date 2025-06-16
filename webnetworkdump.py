@@ -23,6 +23,7 @@ import json
 import threading
 import base64
 from csv import DictWriter
+from drawiohelper import *
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -138,6 +139,52 @@ def create_csv_files(data):
                 print(f"Error writing CSV file {key}.csv: {e}")   
                 continue
             
+def generate_drawio(data):
+    from drawio import NetPlot
+    import json
+
+    cdpdata = data['cisco_ios--show_cdp_neighbors_detail']
+    nodes = []
+    links = []
+
+    for line in cdpdata:
+        host_exist = False
+        node = {}
+        link = {}
+        local_node = shrink_name(line['Devicename'])
+        remote_node = shrink_name(line['destination_host'])
+        node['id']=remote_node
+        node['type']=line['capabilities'].split(" ")[0] # get the first capability
+        link["from"]=local_node
+        link["to"]=remote_node
+        link["local_port"]=short_portname(line["local_port"])
+        link["remote_port"]=short_portname( line["remote_port"])
+        links.append(link) 
+        for existing_node in nodes:  # check if node allready exist
+            if node["id"] == existing_node["id"]:
+                host_exist = True
+        if not host_exist:
+            nodes.append(node)
+            host_exist = False
+
+    for line in cdpdata: # Append source Device if not as neigbor in CDP-Data
+        node_allready_exist=False
+        for node in nodes:
+            if line['Devicename'] == node["id"]:
+                node_allready_exist = True
+                continue
+        if not node_allready_exist:
+            node["id"]=line["Devicename"]
+            node["type"]="Host"
+            nodes.append(node)
+
+    links = remove_duplicate_links(links)
+
+    drawio = NetPlot()
+    drawio.addNodeList(nodes)
+    drawio.addLinkList(links)
+    drawio.exportXML('./dump/drawio.xml')
+    #print(x.display_xml())
 
 
 @app.route("/")
@@ -348,13 +395,14 @@ def dump():
                         continue
                     key=platform+'--'+command.replace(' ','_')
                     add_to_data(key, parsed, hostname)
-
+        
  
     # print(data)  
     with open (f'{DUMP_DIR}/parsed_data.json' , 'w') as file:
         file.write(json.dumps(data, indent=4))               
     content=get_status.get_status(devices)    
     create_csv_files(data)
+    generate_drawio(data) #generate drawio file from parsed data
     return render_template('parse.html', status=content)
 
  

@@ -47,6 +47,19 @@ Download
 Dumpfile
 ![Dumpfile](images/Zipfile.png)
 
+## DrawIO integration 
+Open from Device
+![DrawIO_open](images/Open_drawio.png)
+
+XML Opened, All devices at the same location.
+![DrawIO_File_Opened](images/opened.png)
+
+Arrange: 
+![DrawIO_Arrange](images/arrange.png)
+
+Devices arranged organic Layout
+![DrawIO_Arranged](images/draw.io_arranged.png)
+
 
 ### Quickinstall with UV
 ```
