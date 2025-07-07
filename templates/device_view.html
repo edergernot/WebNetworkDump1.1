@@ -89,15 +89,19 @@
         
     <form method="POST" action="/device_view">
         <input type="hidden" name="action" value="test_connectivity">
-        <button type="submit">Test Connectivity</button>
+        <button type="submit"> Test Connectivity </button>
     </form>
     <form method="POST" action="/device_view" style="display:inline;">
         <input type="hidden" name="action" value="enable_all">
-        <button type="submit">Enable All Devices</button>
+        <button type="submit" class="btn btn-success" >Enable All Devices</button>
     </form>
     <form method="POST" action="/device_view" style="display:inline;">
         <input type="hidden" name="action" value="disable_all">
-        <button type="submit">Disable All Devices</button>
+        <button type="submit" class="btn btn-warning" >Disable All Devices</button>
+    </form>
+    <form method="POST" action="/device_view">
+        <input type="hidden" name="action" value="sw_upgrade">
+        <button type="submit" class="btn btn-danger" >Software Upgrade</button>
     </form>
     
 {% endblock content %}

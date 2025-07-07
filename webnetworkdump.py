@@ -24,6 +24,7 @@ import threading
 import base64
 from csv import DictWriter
 from drawiohelper import *
+from pyntc import ntc_device as NTC
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -186,6 +187,63 @@ def generate_drawio(data):
     drawio.exportXML('./dump/drawio.xml')
     #print(x.display_xml())
 
+def remove_inactve(device):
+    ssh_device=make_netmiko_device(device)
+    del ssh_device["hostname"]  #remove the key hostname not needet fopr netmiko connection
+    commandlist=[["install remove inactive", r"[y/n]]"],
+                 ["y" , ""]] 
+    try:        
+        ssh_session = ConnectHandler(**ssh_device)
+        hostname = ssh_session.find_prompt()[:-1]
+        #print (f'connected to {hostname}')
+    except Exception as E:
+        print (f"Error turing login to device: {device.name} {device.ip_addr}:\n{E}\n")
+        return
+    with open(f"{OUTPUT_DIR}/{hostname}_remove_inactice.txt", "w") as f:
+        try:
+            remove = ssh_session.send_multiline(commandlist)  
+        except Exception as e: 
+            print(f"Error on deleting old images\n ")
+            print(e)
+        try:
+            f.write(remove)
+        except Exception as e:
+            pass      
+    return
+
+def sw_upgrade_devices(device):
+    if device.enabled == False:
+        return
+    file = os.listdir("./upload")
+    upgrade_device=make_netmiko_device(device)
+    if upgrade_device["device_type"] == "cisco_ios":
+        upgrade_device["device_type"] = "cisco_ios_ssh"
+    if upgrade_device["device_type"] == "cisco_asa":
+        upgrade_device["device_type"] = "cisco_asa_ssh"
+    NTC_device=NTC(**upgrade_device)
+    bootoption = NTC_device.get_boot_options()
+    try:
+        if bootoption['sys'] == 'packages.conf':
+            install = True
+    except Exception as e:
+        print(e)
+    print("### Debug: Save running config")
+    NTC_device.save()
+    if install:
+        # Remove inactive Files in Install mode
+        print ("### Debug: Remove inactive")
+        remove_inactve(device)
+    print(f"### Debug: Uploading {file[0]} to {device.name} ..")
+    NTC_device.file_copy(f"./upload/{file[0]}")
+    print("### Debug: Uploading done")
+    print("### Debug: Installing Software")
+    if install:
+        NTC_device.install_os(file[0], install_mode=True)
+    else:
+        NTC_device.install_os(file[0])
+        NTC_device.reboot   
+    return
+
 
 @app.route("/")
 def index():
@@ -245,6 +303,9 @@ def device_view():
         if request.form.get('action') == 'test_connectivity':
             test_connectivity()
         
+        if request.form.get('action') == 'sw_upgrade':
+            return redirect("/sw_upgrade")
+
         # Handle "Enable/Disable" toggle for a specific device
         elif request.form.get('action') == 'toggle_device':
             device_ip = request.form.get('device_ip')
@@ -269,7 +330,7 @@ def device_view():
             output_path = f"{DUMP_DIR}/device_file.csv"
             return send_file(output_path, as_attachment=True)
         
-        # Handle "Export Devices" action
+        # Handle "Import Devices" action
         elif request.form.get('action') == 'import_devices':
             return redirect("/upload")
 
@@ -405,13 +466,55 @@ def dump():
     generate_drawio(data) #generate drawio file from parsed data
     return render_template('parse.html', status=content)
 
- 
 @app.route("/download_dump")
 def download_dump():
     # Export dump_data
     shutil.make_archive("./output/NetworkDump", 'zip', "./dump")
     output_path = "./output/NetworkDump.zip"
     return send_file(output_path, as_attachment=True)#
+
+@app.route("/sw_upgrade", methods=['GET', 'POST'])
+def sw_upgrade():
+    '''Select file for upload and upload it.'''
+    content=get_status.get_status(devices)
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect('/sw_upgrade')
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect('/sw_upgrade')
+        else:
+            filename = secure_filename(file.filename)
+            # delete Upload Folder
+            if os.path.exists("./upload"):
+                shutil.rmtree("./upload", ignore_errors=False, onerror=None)
+            path = os.path.join("./","upload")
+            os.mkdir(path)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect('/sw_upgrade_run')
+    return render_template("/sw_upgrade.html",status=content)
+
+@app.route("/sw_upgrade_run") 
+def sw_upgrade_run():
+    global devices
+    content=get_status.get_status(devices)
+    file = os.listdir("./upload")
+    if len(file) > 1:
+        redirect("/sw_upgrade")
+    if len(devices) <= 30 :
+        num_threads=len(devices)
+    else:
+        num_threads=30
+    threads = ThreadPool( num_threads )
+    results = threads.map( sw_upgrade_devices, devices )
+    threads.close()
+    threads.join()
+    return redirect ('/device_view')
 
 @app.route("/dhcp") # shows spinning weel and starts job
 def dhcp_loading():
@@ -608,7 +711,6 @@ def delete_files():
     os.mkdir(path) 
     content=get_status.get_status(devices)
     return render_template("index.html",status=content)
-
 
 @app.route("/about")
 def about():

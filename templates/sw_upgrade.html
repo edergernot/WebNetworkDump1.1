@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Upload Software file to device and install it:</h3>
+<h5> </h5>
+<h5> You will redirected to device-view after installation..</h5>
+<h5> It may take a while !...</h5>
+<form method=post enctype=multipart/form-data>
+  <input type=file name=file>
+  <input type=submit value="Upload & Install">
+</form>
+{% endblock content %}
