@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+    <title>Upgrade is running...</title>
+    <style>
+        #clock {
+            font-size: 6em;
+            font-weight: bold;
+            color: #0078D7;
+        }
+        #status {
+            font-size: 2em;
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+    <script>
+        let seconds = 0;
+        function updateClock() {
+            let min = Math.floor(seconds / 60);
+            let sec = seconds % 60;
+            let minStr = min.toString().padStart(2, '0');
+            let secStr = sec.toString().padStart(2, '0');
+            document.getElementById('clock').textContent = `${minStr}:${secStr}`;
+            seconds++;
+        }
+        setInterval(updateClock, 1000);
+
+        // get status
+        function pollStatus() {
+            fetch("/sw_upgrade_status")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('status').textContent = data.status;
+                });
+        }
+        setInterval(pollStatus, 1000);
+        window.onload = function() {
+            pollStatus();
+            setTimeout(function() {
+                window.location.href = "/sw_upgrade_run";
+            }, 1000);
+};;
+    </script>
+</head>
+<body>
+    <h2>Upgrade Running...</h2>
+    <div>
+        <span id="clock">00:00</span>
+    </div>
+    <div id="status">Starting...</div>
+</body>
+{% endblock content %}

@@ -36,6 +36,7 @@ app.config['SECRET_KEY'] = '50421D352F92E548C6AC0147380F58BC'  # used to avoid T
 app.config['UPLOAD_FOLDER'] = "./upload"
 global_quickcommands = {}
 
+STATUS_FILE = "./upload/status.json"  #used during SW-Upgrade
 
 def start_webssh_server():
     """Start the WebSSH server in a background thread."""
@@ -212,6 +213,7 @@ def remove_inactve(device):
     return
 
 def sw_upgrade_devices(device):
+    print("sw_upgrade_devices lounched")
     if device.enabled == False:
         return
     file = os.listdir("./upload")
@@ -220,30 +222,35 @@ def sw_upgrade_devices(device):
         upgrade_device["device_type"] = "cisco_ios_ssh"
     if upgrade_device["device_type"] == "cisco_asa":
         upgrade_device["device_type"] = "cisco_asa_ssh"
+    set_upgrade_status("Login to Device ...")
+    print("Login to Device ...")
     NTC_device=NTC(**upgrade_device)
     bootoption = NTC_device.get_boot_options()
+    install = False
     try:
         if bootoption['sys'] == 'packages.conf':
             install = True
     except Exception as e:
         print(e)
     print("### Debug: Save running config")
+    set_upgrade_status("Safe Config ...")
     NTC_device.save()
     if install:
         # Remove inactive Files in Install mode
-        print ("### Debug: Remove inactive")
+        set_upgrade_status ("Remove inactive  ...")
         remove_inactve(device)
     print(f"### Debug: Uploading {file[0]} to {device.name} ..")
+    set_upgrade_status("Uploading File ...")
     NTC_device.file_copy(f"./upload/{file[0]}")
     print("### Debug: Uploading done")
-    print("### Debug: Installing Software")
+    set_upgrade_status("Installing Software ...")
     if install:
         NTC_device.install_os(file[0], install_mode=True)
     else:
         NTC_device.install_os(file[0])
+        set_upgrade_status("Rebooting Device ...")
         NTC_device.reboot   
     return
-
 
 @app.route("/")
 def index():
@@ -476,28 +483,29 @@ def download_dump():
 @app.route("/sw_upgrade", methods=['GET', 'POST'])
 def sw_upgrade():
     '''Select file for upload and upload it.'''
-    content=get_status.get_status(devices)
+    content = get_status.get_status(devices)
     if request.method == 'POST':
-        # check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part')
             return redirect('/sw_upgrade')
         file = request.files['file']
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
         if file.filename == '':
             flash('No selected file')
             return redirect('/sw_upgrade')
         else:
             filename = secure_filename(file.filename)
-            # delete Upload Folder
             if os.path.exists("./upload"):
                 shutil.rmtree("./upload", ignore_errors=False, onerror=None)
-            path = os.path.join("./","upload")
+            path = os.path.join("./", "upload")
             os.mkdir(path)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect('/sw_upgrade_run')
-    return render_template("/sw_upgrade.html",status=content)
+            return redirect('/sw_upgrade_loading')
+    return render_template("/sw_upgrade.html", status=content)
+
+@app.route("/sw_upgrade_loading")
+def sw_upgrade_loading():
+    content = get_status.get_status(devices)
+    return render_template("sw_upgrade_loading.html", status=content)
 
 @app.route("/sw_upgrade_run") 
 def sw_upgrade_run():
@@ -510,6 +518,8 @@ def sw_upgrade_run():
         num_threads=len(devices)
     else:
         num_threads=30
+    set_upgrade_status("File Uploadet to Server")
+    print("File uploadet to Server")
     threads = ThreadPool( num_threads )
     results = threads.map( sw_upgrade_devices, devices )
     threads.close()
@@ -717,6 +727,20 @@ def about():
     global devices
     content=get_status.get_status(devices)
     return render_template("about.html",status=content) 
+
+
+
+def set_upgrade_status(text):
+    with open(STATUS_FILE, "w") as f:
+        json.dump({"status": text}, f)
+
+@app.route("/sw_upgrade_status")
+def sw_upgrade_status():
+    try:
+        with open(STATUS_FILE) as f:
+            return f.read()
+    except Exception:
+        return json.dumps({"status": "Starting..."})
 
 
 if __name__ == "__main__":
