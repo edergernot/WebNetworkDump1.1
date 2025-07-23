@@ -49,9 +49,8 @@ def start_webssh_server():
     except Exception as e:
         print(f"Failed to start WebSSH server: {e}")
 
-# Start the WebSSH server when Flask starts
-# threading.Thread(target=start_webssh_server, daemon=True).start()
-
+    # Start the WebSSH server when Flask starts
+    # threading.Thread(target=start_webssh_server, daemon=True).start()
 
 def add_to_data(key, parsed, hostname, vrf='NONE'):
     global data
@@ -728,8 +727,6 @@ def about():
     content=get_status.get_status(devices)
     return render_template("about.html",status=content) 
 
-
-
 def set_upgrade_status(text):
     with open(STATUS_FILE, "w") as f:
         json.dump({"status": text}, f)
@@ -741,7 +738,6 @@ def sw_upgrade_status():
             return f.read()
     except Exception:
         return json.dumps({"status": "Starting..."})
-
 
 if __name__ == "__main__":
     threading.Thread(target=start_webssh_server, daemon=True).start()
