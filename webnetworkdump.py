@@ -138,7 +138,7 @@ def create_excel_files(data):
         column_settings = [{'header': column} for column in df.columns]
         worksheet.add_table(0, 0, max_row, max_col - 1, {'columns': column_settings}, )
         worksheet.set_column(0, max_col - 1, 15)
-        writer._save()
+        writer.close()    
 
 def create_csv_files(data):
     for key in data.keys():
