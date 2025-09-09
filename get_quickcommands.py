@@ -2,8 +2,6 @@
 from netmiko import ConnectHandler
 import logging
 
-
-
 def execute_quickcommand(device): 
     OUTPUT_DIR='./quickcommand'
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko

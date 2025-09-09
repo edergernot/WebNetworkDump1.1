@@ -70,7 +70,6 @@ class NetPlot():
                     'height':'50',
                     'nodeLevel':'4'}
 
-
     def addNode(self,nodeName,nodeDescription='',nodeType=''):
         try:
             shapeParameters = self._getMXgraphShape(nodeType)
@@ -144,10 +143,6 @@ class NetPlot():
         
         mxPoint = ET.SubElement(mcGeometry, 'mxPoint')
         mxPoint.set('as','offset')
-
-
-                                                                                        
-
 
     def addLinkList(self,linkListOfDictionary):
         try:
