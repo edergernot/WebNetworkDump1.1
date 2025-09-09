@@ -25,6 +25,7 @@ import base64
 from csv import DictWriter
 from drawiohelper import *
 from pyntc import ntc_device as NTC
+import pandas as pd
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -124,6 +125,20 @@ def test_logon(device):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def create_excel_files(data):
+    for key in data.keys():
+        filename = f"{DUMP_DIR}/{key}.xlsx"
+        df = pd.DataFrame(data[key])
+        writer = pd.ExcelWriter(filename, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1', startrow=1, header=False, index=False)
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+        (max_row, max_col) = df.shape
+        column_settings = [{'header': column} for column in df.columns]
+        worksheet.add_table(0, 0, max_row, max_col - 1, {'columns': column_settings}, )
+        worksheet.set_column(0, max_col - 1, 15)
+        writer._save()
 
 def create_csv_files(data):
     for key in data.keys():
@@ -462,13 +477,12 @@ def dump():
                         continue
                     key=platform+'--'+command.replace(' ','_')
                     add_to_data(key, parsed, hostname)
-        
- 
     # print(data)  
     with open (f'{DUMP_DIR}/parsed_data.json' , 'w') as file:
         file.write(json.dumps(data, indent=4))               
     content=get_status.get_status(devices)    
-    create_csv_files(data)
+    #create_csv_files(data)
+    create_excel_files(data)
     generate_drawio(data) #generate drawio file from parsed data
     return render_template('parse.html', status=content)
 
