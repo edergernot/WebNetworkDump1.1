@@ -64,3 +64,13 @@ def remove_duplicate_links(links):
             seen_ids.add(link_id)
             seen_ids.add(reverse_link_id)
     return unique_links
+
+def remove_duplicate_hosts(hosts):
+    unique_hosts = []
+    seen_hosts = set()
+    for host in hosts:
+        host_id=host['id']
+        if host_id not in seen_hosts:
+            unique_hosts.append(host)
+            seen_hosts.add(host_id)
+    return unique_hosts

@@ -1,29 +1,24 @@
 .{% extends "layout.html" %}
 {% block content %}
-    <h3> About Page</h3>
+    <h3> About Page (release nodes)</h3>
     <p></p>
-    <p>Networkdump 1.1 is a smaller subset of Networkdump graphing isn't includet.</p>
-    <p>This should help networkengineers for giving an overview of new networks. It will ask for IP-Network to find Devices. It will try to login and find the devicetype</p>
-    <p>Then it will login and execute a buntch of "show-commands" depending on devicetype.</p>
-    <p>This files can be downloaded and can be used for autofilling Nautobot-container or drawings and excel-files.</p>
-    <p></p>
-    <p>This was done by Gernot Eder</p>
-    <p>                     (c)2023 </p>
-    <p></p>
-    <p>Release Nodes:</p>
-    <p>02.08.2023: added quickcommands, fixed dockerfile, fixed delete data</p>
-    <p>29.12.2023: added "enable" checkbox in device-view</p>
-    <p>08.01.2024: added "Delete Files and enable/disable all"</p>
-    <p>04.07.2024: added device import, this is just the url /import. device-file.csv have to be in folder ./dump. Only one Username supported (Quick & Dirty) DEPRICATED!!</p>
-    <p>30.07.2024: added access_port utility to add configuration on access-ports. Use url /access</p>
-    <p>28.07.2004: access_port utility extendet to do a backup to flash before changing are done</p>
-    <p>14.11.2024: added dhcp-snooping utility to enable dhcp-snooping. Use url /dhcp</p>
-    <p>18.11.2024: added Connectivity Check and Device-File Export</p>
-    <p>19.11.2024: import devices via GUI enabled, depricated old "hidden" import</p>
-    <p>05.12.2024: added SSH-Login from Device View</p>
-    <p>05.02.2025: Added commands for Catalyst 9800 WLAN for dump</p>
-    <p>19.02.2025: Added creation of CSV-Files from dumps</p>
-    <p>15.06.2025: Added gereation XML-File to import in DrawIO</p>
-    <p>07.07.2025: Added softwareupgrade under Device View. (only Cisco IOS, IOS-XE and ASA)</p>
-    <p>09.09.2025: Removed CSV-Files from dump. Added Excel-Files to Dump-Files</p>
+  <ul>
+  <li><strong>02.08.2023:</strong> Added quick commands, fixed Dockerfile, fixed data deletion</li>
+  <li><strong>29.12.2023:</strong> Added "Enable" checkbox in Device View</li>
+  <li><strong>08.01.2024:</strong> Added "Delete Files and Enable/Disable All"</li>
+  <li><strong>04.07.2024:</strong> Added device import. This is available at the URL <code>/import</code>. The <code>device-file.csv</code> must be located in the <code>./dump</code> folder. 
+    <br>Only one username is supported (Quick & Dirty). <strong>DEPRECATED!</strong></li>
+  <li><strong>30.07.2024:</strong> Added <code>access_port</code> utility to configure access ports. Use URL <code>/access</code></li>
+  <li><strong>28.07.2024:</strong> Extended <code>access_port</code> utility to perform a backup to flash before making changes</li>
+  <li><strong>14.11.2024:</strong> Added DHCP-Snooping utility to enable DHCP snooping. Use URL <code>/dhcp</code></li>
+  <li><strong>18.11.2024:</strong> Added connectivity check and device file export</li>
+  <li><strong>19.11.2024:</strong> Enabled device import via GUI, deprecated old "hidden" import</li>
+  <li><strong>05.12.2024:</strong> Added SSH login from Device View</li>
+  <li><strong>05.02.2025:</strong> Added commands for Catalyst 9800 WLAN dumps</li>
+  <li><strong>19.02.2025:</strong> Added generation of CSV files from dumps</li>
+  <li><strong>15.06.2025:</strong> Added generation of XML files for Draw.io import</li>
+  <li><strong>07.07.2025:</strong> Added software upgrade under Device View (only Cisco IOS, IOS-XE, and ASA)</li>
+  <li><strong>09.09.2025:</strong> Removed CSV files from dumps. Added Excel files to dump output</li>
+  <li><strong>11.09.2025:</strong> Improved Draw.io export. Now generates a reduced XML file excluding unparsed devices</li>
+</ul>
 {% endblock content %}
