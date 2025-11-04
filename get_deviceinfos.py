@@ -1,5 +1,5 @@
 import ipaddress
-from netmiko import ConnectHandler, SSHDetect 
+from netmiko import ConnectHandler, SSHDetect , exceptions
 from multiprocessing.dummy import Pool as ThreadPool
 import logging
 
@@ -22,17 +22,26 @@ def ssh_worker(IP):
     try:
         sshtest = SSHDetect(**testdevice)
         device_type = sshtest.autodetect()
+    except exceptions.NetmikoTimeoutException:
+        testdevice["device_type"]='cisco_ios_telnet'
+        sshtest = ConnectHandler(**testdevice)
+        hostname1=sshtest.find_prompt()
+        device_type='cisco_ios_telnet'
     except Exception as E:
         print (f"Error turing login to IP {IP}:\n{E}\n")
         return
     if device_type == None:
         device_type == 'paloalto_panos'
-    buffer = sshtest.initial_buffer
-    logging.debug(f'Buffer from initial login {buffer}')
     try:
+        buffer = sshtest.initial_buffer
+        logging.debug(f'Buffer from initial login {buffer}')
         hostname = buffer.split('\n')[-1][:-1]
+    except AttributeError:
+        hostname = hostname1
     except Exception as e:
         print (f'Error: Could not get Hostname from initial Device-discovery!')
+    if hostname1 != "":
+        hostname=hostname1
     if device_type == 'paloalto_panos':  #remove HA - State from Prompt
         testdevice['device_type']='paloalto_panos'
         ssh = ConnectHandler(**testdevice)

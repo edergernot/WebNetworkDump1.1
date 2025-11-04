@@ -1,5 +1,5 @@
 from models import network_device
-from netmiko import ConnectHandler, SSHDetect
+from netmiko import ConnectHandler, SSHDetect, exceptions
 import os
 from flask import Flask, render_template, flash, url_for, redirect, send_file, request
 from werkzeug.utils import secure_filename
@@ -106,7 +106,7 @@ def test_connectivity():
     
 def test_logon(device):
     global devices
-    testdevice =  {'device_type': device.type, 'ip':device.ip_addr, 'username':device.username, 'password':device.password}
+    testdevice =  {'device_type': device.type, 'ip':device.ip_addr, 'username':device.username, 'password':device.password, 'secret':device.password}
     try: 
         ssh_session = ConnectHandler(**testdevice)
         hostname = ssh_session.find_prompt()

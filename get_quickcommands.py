@@ -10,7 +10,9 @@ def execute_quickcommand(device):
     config=device.pop('config')
     logging.debug(f'get_quickcommands.execute_quickcommand: Try to Connect to {hostname}')
     try:
+        device['secret']=device['password']
         ssh_session = ConnectHandler(**device)
+        ssh_session.enable()
         logging.debug(f"get_quickcommands.execute_quickcommand: Connected to {ssh_session.find_prompt()}")
     except Exception as e:
         logging.debug(f'get_quickcommands.execute_quickcommand: Something went wrong when connecting Device')

@@ -190,6 +190,7 @@ def make_netmiko_device(device):
     netmiko_device['username']=device.username
     netmiko_device['password']=device.password
     netmiko_device['hostname']=device.name
+    netmiko_device['secret']=device.password
     return (netmiko_device)
 
 def dump_cisco_ios(device): 
@@ -197,6 +198,7 @@ def dump_cisco_ios(device):
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
         ssh_session = ConnectHandler(**device)
+        ssh_session(enable)
     except Exception as e:
         logging.debug(f'get_dumps.dump_cisco_ios: Something went wrong when connecting Device')
         logging.debug(e)
