@@ -24,9 +24,13 @@ def ssh_worker(IP):
         device_type = sshtest.autodetect()
     except exceptions.NetmikoTimeoutException:
         testdevice["device_type"]='cisco_ios_telnet'
-        sshtest = ConnectHandler(**testdevice)
-        hostname1=sshtest.find_prompt()
-        device_type='cisco_ios_telnet'
+        try:
+            sshtest = ConnectHandler(**testdevice)
+            hostname1=sshtest.find_prompt()
+            device_type='cisco_ios_telnet'
+        except Exception as e:
+            print(f"Error while Telnet Login to IP {IP}:\n{e}\n")
+            return
     except Exception as E:
         print (f"Error turing login to IP {IP}:\n{E}\n")
         return
