@@ -17,6 +17,7 @@ def ssh_worker(IP):
     Add the device to global devices'''
     from models import network_device
     global username, password, devices
+    hostname1=""
     testdevice = {'device_type':"autodetect", 'ip':IP, 'username':username, 'password':password}
     logging.debug(f'get_deviceinfos.ssh_worker. Testdevice: {testdevice}')
     try:

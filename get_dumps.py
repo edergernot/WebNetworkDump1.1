@@ -547,6 +547,8 @@ def dump_worker(device): # Main Thread get device infos
     dev_type=dump_device['device_type']
     if dev_type=='cisco_ios':
         dump_cisco_ios(dump_device)
+    elif dev_type=='cisco_ios_telnet':
+        dump_cisco_ios(dump_device)
     elif dev_type=='cisco_nxos':
         dump_cisco_nxos(dump_device)
     elif dev_type=='cisco_asa':
