@@ -7,16 +7,19 @@ username = ''
 password = ''
 devices = []
 
+
 def delete_device():
     global devices 
     devices = []
     return
 
-def ssh_worker(IP):
+def ssh_worker(IPdict):
     '''Logs in to Devices and try to get Device-Type
     Add the device to global devices'''
     from models import network_device
     global username, password, devices
+    telnet = IPdict["Telnet"]
+    IP=IPdict["IP"]
     hostname1=""
     testdevice = {'device_type':"autodetect", 'ip':IP, 'username':username, 'password':password}
     logging.debug(f'get_deviceinfos.ssh_worker. Testdevice: {testdevice}')
@@ -24,19 +27,22 @@ def ssh_worker(IP):
         sshtest = SSHDetect(**testdevice)
         device_type = sshtest.autodetect()
     except exceptions.NetmikoTimeoutException:
-        testdevice["device_type"]='cisco_ios_telnet'
-        try:
-            sshtest = ConnectHandler(**testdevice)
-            hostname1=sshtest.find_prompt()
-            device_type='cisco_ios_telnet'
-        except Exception as e:
-            print(f"Error while Telnet Login to IP {IP}:\n{e}\n")
+        if telnet == True:
+            testdevice["device_type"]='cisco_ios_telnet'
+            try:
+                sshtest = ConnectHandler(**testdevice)
+                hostname1=sshtest.find_prompt()
+                device_type='cisco_ios_telnet'
+            except Exception as e:
+                print(f"Error while Telnet Login to IP {IP}:\n{e}\n")
+                return
+        else:
             return
     except Exception as E:
         print (f"Error turing login to IP {IP}:\n{E}\n")
         return
     if device_type == None:
-        device_type == 'paloalto_panos'
+        device_type = 'paloalto_panos'
     try:
         buffer = sshtest.initial_buffer
         logging.debug(f'Buffer from initial login {buffer}')
@@ -73,7 +79,7 @@ def ssh_worker(IP):
     logging.debug(f'get_deviceinfos.ssh_worker. Device: {device.name} with IP: {device.ip_addr} added')
     
 
-def ssh_login(ip_network, user, passwd):
+def ssh_login(ip_network, user, passwd, telnet):
     ''' try to login with Netmiko and detect Device'''
     global username, password, devices
     username = user
@@ -81,8 +87,12 @@ def ssh_login(ip_network, user, passwd):
     ip_list=[]
    
     for addr in ipaddress.IPv4Network(ip_network).hosts():
+        IP={}
         ip = str(addr)
-        ip_list.append(ip)
+        IP["IP"]=ip
+        IP["Telnet"]=telnet
+        ip_list.append(IP)
+
     logging.debug(f'get_deviceinfos.ssh_login: Ip-Adresses to login: {ip_list}')
     if len(ip_list) > 50:
         number_workers = 50

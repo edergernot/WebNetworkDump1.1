@@ -3,6 +3,7 @@ DUMP_DIR = "./dump"
 username = ""
 password = ""
 ip_network =" "
+telnet=False
 devices = []
 dump_data = {}
 excelfiles = 0

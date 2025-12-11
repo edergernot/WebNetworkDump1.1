@@ -37,6 +37,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '50421D352F92E548C6AC0147380F58BC'  # used to avoid TCP-Highjacking in Flask
 app.config['UPLOAD_FOLDER'] = "./upload"
 global_quickcommands = {}
+telnet = False
 
 STATUS_FILE = "./upload/status.json"  #used during SW-Upgrade
 
@@ -228,13 +229,14 @@ def index():
 
 @app.route("/devicediscovery", methods=['GET', 'POST'])
 def devicediscovery():
-    global username, password, ip_network, devices
+    global username, password, ip_network, devices, telnet
     content=get_status.get_status(devices)
     form = DeviceDiscoveryForm()
     if form.validate_on_submit():
         username=form.username.data
         password=form.password.data
         ip_network=form.ip_network.data
+        telnet=form.telnet.data
         if not check_ip_network(ip_network):
             flash(f'non valid IPv4 Network: {ip_network}', 'success')
             return redirect(url_for('devicediscovery'))
@@ -253,9 +255,9 @@ def discover_loading():
 
 @app.route("/trylogon")
 def trylogon():
-    global username, password, ip_network, devices
+    global username, password, ip_network, devices, telnet
     content=get_status.get_status(devices)
-    login_devices=get_deviceinfos.ssh_login(ip_network, username, password)
+    login_devices=get_deviceinfos.ssh_login(ip_network, username, password, telnet)
     logging.debug(f'webnetworkdump.trylogon. Devices: {login_devices}')
     for device in login_devices:
         exist = False

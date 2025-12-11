@@ -8,6 +8,7 @@ class DeviceDiscoveryForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=2,max=30)])
     password = PasswordField('Password', validators=[DataRequired()])
     ip_network = StringField('IP-Network (like 192.168.1.0/24)', validators=[DataRequired()])
+    telnet = BooleanField('Enable Telnet discovery if no SSH answer')
     submit = SubmitField('Start Discovery')
 
 class QuickCommand(FlaskForm):
