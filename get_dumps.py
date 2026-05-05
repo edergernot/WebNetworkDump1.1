@@ -162,6 +162,7 @@ WLC_9800_COMMANDS = ["show ap summary",
 
 from netmiko import ConnectHandler
 import logging
+import interface_report
 
 OUTPUT_DIR='./dump'
 
@@ -193,7 +194,7 @@ def make_netmiko_device(device):
     netmiko_device['secret']=device.password
     return (netmiko_device)
 
-def dump_cisco_ios(device): 
+def dump_cisco_ios(device):
     vrf_enabled = False
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
@@ -231,11 +232,9 @@ def dump_cisco_ios(device):
                 vrfs=[]
                 logging.debug(f'get_dumps.dump_cisco_ios: VRF Output\n {vrf_output}')
                 for line in vrf_output.split("\n"):
-                    if line.split(" ")[0] == "Name":
+                    if line.strip().split(" ")[0] == "Name":
                         continue
-                    if line[4] == " ":
-                        continue
-                    vrf = line.split(" ")[2]
+                    vrf = line.strip().split(" ")[0]
                     vrfs.append(vrf)
                 for vrf in vrfs:
                     for command in VRF_COMMANDS:
@@ -324,6 +323,7 @@ def dump_cisco_ios(device):
     except Exception as e:
         logging.debug('get_dumps.dump_cisco_ios: Somthing went wrong with sending commands')
         logging.debug(e)
+    interface_report.interface_report(ssh_session) 
     return
 
 def dump_cisco_nxos(device):
@@ -546,6 +546,8 @@ def dump_worker(device): # Main Thread get device infos
     dump_device=make_netmiko_device(device)
     dev_type=dump_device['device_type']
     if dev_type=='cisco_ios':
+        dump_cisco_ios(dump_device)
+    elif dev_type=='cisco_xe':
         dump_cisco_ios(dump_device)
     elif dev_type=='cisco_ios_telnet':
         dump_cisco_ios(dump_device)

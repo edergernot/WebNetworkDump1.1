@@ -27,6 +27,11 @@ from drawiohelper import *
 from pyntc import ntc_device as NTC
 import pandas as pd
 from generate_drawio import generate_drawio
+from oui_tool import *
+import datetime
+from interface_report import generate_excel
+
+
 
 ############## Logging Level #################
 #logging.basicConfig(level=logging.DEBUG)
@@ -42,6 +47,11 @@ telnet = False
 STATUS_FILE = "./upload/status.json"  #used during SW-Upgrade
 
 def start_webssh_server():
+    # Generate MAC OUI to Vendor Dict
+    print("Check OUI-File")
+    download_oui_file() # from oui_tool
+    parse_oui_file()  # from oui_tool
+
     """Start the WebSSH server in a background thread."""
     try:
         command=["wssh", "--fbidhttp=False"]
@@ -54,7 +64,7 @@ def start_webssh_server():
 
     # Start the WebSSH server when Flask starts
     # threading.Thread(target=start_webssh_server, daemon=True).start()
-
+   
 def add_to_data(key, parsed, hostname, vrf='NONE'):
     global data
     if key not in data.keys():
@@ -372,6 +382,8 @@ def dump():
         shutil.rmtree("./dump", ignore_errors=False, onerror=None)
     path = os.path.join("./","dump")
     os.mkdir(path)
+    with open ("./dump/interface_cfg.json", "w") as f:
+        pass
     if len(devices) <= 30 :
         num_threads=len(devices)
     else:
@@ -395,14 +407,23 @@ def dump():
     OUTPUT_DIR="./dump/parsed"
     if not os.path.exists("./dump"):
         return redirect(url_for('dump'))
+    ### Interface-Report
+    with open("./dump/interface_cfg.json","r") as f:
+        All_Interfaces=list(map(json.loads, f))
+    generate_excel(All_Interfaces)
     files = os.listdir(DUMP_DIR)  
     for file in files:
-        if file == "device_file.csv":
+        if file == "device_file.csv" or file == "interface_cfg.xlsx":
             continue
+        if file == "interface_cfg.json":
+            continue
+
         filename = f"{DUMP_DIR}/{file}"
         print(f"Parsing File: {file}")
         hostname = file[:-12]
         platform = find_type_from_hostname(devices,hostname)
+        if platform == "cisco_xe":
+            platform = "cisco_ios"
         with open(filename) as f:
             f_data=f.read()
             f_data1 = f_data.split('\n****************************************\n')

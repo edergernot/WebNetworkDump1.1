@@ -37,12 +37,34 @@ def generate_drawio(data):
             remote_node = remote_node.split("(")[0]
         except KeyError:
             pass
+        try: # new NTC-Parsers
+            remote_node = shrink_name(line['neighbor_name'])
+        except KeyError:
+            pass
+        if remote_node == None: ##Exit if no parser matches
+            continue
         node['id']=remote_node
         node['type']=line['capabilities'].split(" ")[0] # get the first capability
         link["from"]=local_node
         link["to"]=remote_node
-        link["local_port"]=short_portname(line["local_port"])
-        link["remote_port"]=short_portname( line["remote_port"])
+        try:
+            link["local_port"]=short_portname(line["local_port"])
+        except KeyError:
+            pass
+        try:
+            link["local_port"]=short_portname(line["local_interface"])
+        except KeyError:
+            pass
+        try:
+            link["remote_port"]=short_portname( line["remote_port"])
+        except KeyError:
+            pass
+        try:
+            link["remote_port"]=short_portname( line["neighbor_interface"])
+        except KeyError:
+            pass
+        if link == None:
+            continue  
         links.append(link) 
         for existing_node in nodes:  # check if node allready exist
             if node["id"] == existing_node["id"]:
