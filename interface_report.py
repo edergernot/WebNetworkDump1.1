@@ -218,7 +218,7 @@ def current_mac_address(interface,ssh):
             mac_type = m.get("type")
             l_mac_type.append(mac_type)
             oui = addr[:6]
-            vendor = oui_to_org[oui]
+            vendor = oui_to_org.get(oui,"Unknow")
             l_vendor.append(vendor)
     mac_return["MAC_Count"]=len(mac)     
     if len(l_addr) == 1:
