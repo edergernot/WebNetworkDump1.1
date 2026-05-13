@@ -22,9 +22,7 @@ access_port_portsec=[
 def configure_access_ports(ssh_device):
     import time
     import logging
-    #logging.basicConfig(level=logging.DEBUG) # Needet for debugging
-    from netmiko import ConnectHandler
-    import logging
+    from get_dumps import _connect
     OUTPUT_DIR='./quickcommand'
     access_interface=[]
     hostname = ssh_device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
@@ -34,7 +32,7 @@ def configure_access_ports(ssh_device):
     if dev_type != 'cisco_ios':  # only run on Cisco IOS devices
         return
     try:
-        ssh_session = ConnectHandler(**ssh_device)
+        ssh_session = _connect(ssh_device)
     except Exception as e:
         logging.debug(f'find_access_ports Something went wrong when connecting Device')
         logging.debug(e)

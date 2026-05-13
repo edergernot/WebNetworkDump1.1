@@ -160,9 +160,40 @@ WLC_9800_COMMANDS = ["show ap summary",
     "show wlan id <wlan_id>",
     "show wlan id <wlan_id> client stats"]
 
+import netmiko_multihop  # noqa — monkeypatches netmiko ConnectHandler with jump_to/jump_back
 from netmiko import ConnectHandler
 import logging
 import interface_report
+
+
+def _make_jh_dict(jumphost):
+    return {
+        'device_type': 'linux',
+        'ip': jumphost.ip_addr,
+        'port': jumphost.port,
+        'username': jumphost.username,
+        'password': jumphost.password,
+    }
+
+
+def _connect(device_dict):
+    """Connect to device via netmiko_multihop jumphost if set, else direct.
+    Falls back to disabled_algorithms for older devices rejecting modern RSA (paramiko 5.x)."""
+    jumphost = device_dict.pop('_jumphost', None)
+    if jumphost:
+        jh_session = ConnectHandler(**_make_jh_dict(jumphost))
+        jump_dict = dict(device_dict)
+        if 'host' in jump_dict and 'ip' not in jump_dict:
+            jump_dict['ip'] = jump_dict.pop('host')
+        jh_session.jump_to(**jump_dict)
+        return jh_session
+    try:
+        return ConnectHandler(**device_dict)
+    except Exception as e:
+        if 'banner' in str(e).lower():
+            device_dict['disabled_algorithms'] = {'pubkeys': ['rsa-sha2-256', 'rsa-sha2-512']}
+            return ConnectHandler(**device_dict)
+        raise
 
 OUTPUT_DIR='./dump'
 
@@ -185,21 +216,23 @@ def _get_template_dir():
     return template_dir
 
 def make_netmiko_device(device):
-    netmiko_device={}
-    netmiko_device['device_type']=device.type
-    netmiko_device['host']=device.ip_addr
-    netmiko_device['username']=device.username
-    netmiko_device['password']=device.password
-    netmiko_device['hostname']=device.name
-    netmiko_device['secret']=device.password
-    return (netmiko_device)
+    netmiko_device = {}
+    netmiko_device['device_type'] = device.type
+    netmiko_device['host'] = device.ip_addr
+    netmiko_device['username'] = device.username
+    netmiko_device['password'] = device.password
+    netmiko_device['hostname'] = device.name
+    netmiko_device['secret'] = device.password
+    if device.use_jumphost and device.jumphost:
+        netmiko_device['_jumphost'] = device.jumphost
+    return netmiko_device
 
 def dump_cisco_ios(device):
     vrf_enabled = False
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
-        ssh_session = ConnectHandler(**device)
-        ssh_session(enable)
+        ssh_session = _connect(device)
+        ssh_session.enable()
     except Exception as e:
         logging.debug(f'get_dumps.dump_cisco_ios: Something went wrong when connecting Device')
         logging.debug(e)
@@ -331,7 +364,7 @@ def dump_cisco_nxos(device):
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     logging.debug(f'get_dumps.dump_cisco_nxos: ')
     try:
-        ssh_session = ConnectHandler(**device)
+        ssh_session = _connect(device)
     except Exception as e:
         logging.debug(f'get_dumps.dump_cisco_nxos: Something went wrong when connecting Device')
         logging.debug(e)
@@ -401,7 +434,7 @@ def dump_cisco_nxos(device):
 def dump_cisco_asa(device):
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
-        ssh_session = ConnectHandler(**device)
+        ssh_session = _connect(device)
     except Exception as e:
         logging.debug(f'get_dumps.dump_cisco_asa: Something went wrong when connecting Device')
         logging.debug(e)
@@ -430,7 +463,7 @@ def dump_paloalto_panos(device):
     import time
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
-        ssh_session = ConnectHandler(**device,)
+        ssh_session = _connect(device)
     except Exception as e:
         logging.debug(f'get_dumps.dump_palo_asa: Something went wrong when connecting Device')
         logging.debug(e)
@@ -466,7 +499,7 @@ def dump_paloalto_panos(device):
 def dump_hp_comware(device):
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
-        ssh_session = ConnectHandler(**device)
+        ssh_session = _connect(device)
     except Exception as e:
         logging.debug(f'get_dumps.dump_hp_comware Something went wrong when connecting Device')
         logging.debug(e)
@@ -515,7 +548,7 @@ def dump_with_textfsm(device): # get commands from NTC-Templates and dump these.
                 TEXTFSM_commands.append(command)
     hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
     try:
-        ssh_session = ConnectHandler(**device)
+        ssh_session = _connect(device)
     except Exception as e:
         logging.debug(f'get_dumps.dump_with_textfsm: Something went wrong when connecting Device')
         logging.debug(e)

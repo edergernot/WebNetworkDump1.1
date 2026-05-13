@@ -31,19 +31,25 @@
               <div class="navbar-nav navbar-left">
                 <a class="nav-item nav-link" href="/devicediscovery">Discovery</a>
                 <a class="nav-item nav-link" href="/device_view">View Devices</a>
-                <a class="nav-item nav-link" href="/dump_loading">Dump</a>   
+                <a class="nav-item nav-link" href="/dump_loading">Dump</a>
                 <a class="nav-item nav-link" href="/download_dump">Download Dump</a>
-                <a class="nav-item nav-link" href="/quickcommands">Quick Commands</a>     
+                <a class="nav-item nav-link" href="/quickcommands">Quick Commands</a>
               </div>
             </div>
             <div> <!-- Navbar Right Side -->
-              <span> 
-                  <div class="navbar-nav navbar-right" >
-                    <a class="nav-item nav-link" href="/delete_files">Delete Files</a>
-                    <a class="nav-item nav-link" href="/delete">Delete all Data</a>
-                    <a class="nav-item nav-link" href="/about">About</a>
+              <div class="navbar-nav navbar-right">
+                <div class="nav-item dropdown jh-dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" onclick="toggleDropdown(event, 'toolsMenu')">Tools</a>
+                  <div class="dropdown-menu jh-menu" id="toolsMenu">
+                    <a class="dropdown-item" href="/jumphost">Manage Jumphosts</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/delete_files">Delete Files</a>
+                    <a class="dropdown-item text-danger" href="/delete"
+                       onclick="return confirm('Delete all devices and data?')">Delete all Data</a>
                   </div>
-                </span>   
+                </div>
+                <a class="nav-item nav-link" href="/about">About</a>
+              </div>
             </div>
           </div>
         </nav>
@@ -83,8 +89,19 @@
     <script type="text/javascript">
       function loading(){
           $("#loading").show();
-          $("#content").hide();       
+          $("#content").hide();
       }
+      function toggleDropdown(e, id) {
+          e.preventDefault();
+          document.getElementById(id).classList.toggle('show');
+      }
+      document.addEventListener('click', function(e) {
+          if (!e.target.closest('.jh-dropdown')) {
+              document.querySelectorAll('.jh-menu.show').forEach(function(m) {
+                  m.classList.remove('show');
+              });
+          }
+      });
     </script>
 
     <!-- Option 1: Bootstrap Bundle with Popper -->

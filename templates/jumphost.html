@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Jumphost Management</h1>
+    <legend class="border-bottom mb-4"></legend>
+
+    <h4>Configured Jumphosts</h4>
+    {% if jumphosts %}
+    <table class="table table-bordered table-hover table-sm">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>IP Address</th>
+                <th>Port</th>
+                <th>Username</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for jh in jumphosts %}
+            <tr>
+                <td>{{ jh.name }}</td>
+                <td>{{ jh.ip_addr }}</td>
+                <td>{{ jh.port }}</td>
+                <td>{{ jh.username }}</td>
+                <td>
+                    <a href="{{ url_for('jumphost_delete', jh_ip=jh.ip_addr) }}"
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('Remove jumphost {{ jh.name }}?')">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No jumphosts configured yet.</p>
+    {% endif %}
+
+    <legend class="border-bottom mb-4 mt-4"></legend>
+    <h4>Add Jumphost</h4>
+    <div class="contents-selection">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <div class="form-group">
+                    {{ form.name.label(class="form-control-label") }}
+                    {% if form.name.errors %}
+                        {{ form.name(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.name.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.name(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.ip_addr.label(class="form-control-label") }}
+                    {% if form.ip_addr.errors %}
+                        {{ form.ip_addr(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.ip_addr.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.ip_addr(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.port.label(class="form-control-label") }}
+                    {% if form.port.errors %}
+                        {{ form.port(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.port.errors %}<span>{{ error }}</span>{% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.port(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.username.label(class="form-control-label") }}
+                    {{ form.username(class="form-control form-control-lg") }}
+                </div>
+                <div class="form-group">
+                    {{ form.password.label(class="form-control-label") }}
+                    {{ form.password(class="form-control form-control-lg") }}
+                </div>
+            </fieldset>
+            <legend class="border-bottom mb-4"></legend>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-dark") }}
+            </div>
+        </form>
+    </div>
+{% endblock content %}

@@ -86,3 +86,28 @@ body {
     background: url(/static/ajax-loader.gif) no-repeat;
     cursor: wait;
     }
+
+/* Jumphost foldable dropdown */
+.jh-dropdown { position: relative; }
+.jh-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 180px;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    padding: 4px 0;
+}
+.jh-menu.show { display: block; }
+.jh-menu .dropdown-item {
+    display: block;
+    padding: 6px 16px;
+    color: #333;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.jh-menu .dropdown-item:hover { background: #f8f9fa; }
+.jh-menu .dropdown-divider { height: 0; margin: 4px 0; border-top: 1px solid #e9ecef; }

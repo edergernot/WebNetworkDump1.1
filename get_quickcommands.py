@@ -1,56 +1,63 @@
 
-from netmiko import ConnectHandler
+from get_dumps import _connect
 import logging
 
-def execute_quickcommand(device): 
+def execute_quickcommand(device):
     OUTPUT_DIR='./quickcommand'
-    hostname = device.pop('hostname') # remove Hostname from Dict, not used for Netmiko
+    hostname = device.pop('hostname')
     quickcommands = device.pop('commands')
     commands = quickcommands.split("\n")
-    config=device.pop('config')
-    logging.debug(f'get_quickcommands.execute_quickcommand: Try to Connect to {hostname}')
+    config = device.pop('config')
+
+    # Connect — fail fast and visibly if it doesn't work
     try:
-        device['secret']=device['password']
-        ssh_session = ConnectHandler(**device)
-        ssh_session.enable()
-        logging.debug(f"get_quickcommands.execute_quickcommand: Connected to {ssh_session.find_prompt()}")
+        device['secret'] = device['password']
+        ssh_session = _connect(device)
+        print(f'QuickCommand: connected to {hostname}')
     except Exception as e:
-        logging.debug(f'get_quickcommands.execute_quickcommand: Something went wrong when connecting Device')
-        logging.debug(e)
+        print(f'QuickCommand: cannot connect to {hostname}: {e}')
+        return
+
+    # Enable — some devices don't need it, so just warn and continue
+    try:
+        ssh_session.enable()
+    except Exception as e:
+        print(f'QuickCommand: enable() failed on {hostname} (continuing): {e}')
+
     if config:
-        hostfilename = hostname +"_quick_config.txt"
-        with open (f"{OUTPUT_DIR}/{hostfilename}","w") as outputfile:
-                outputfile.write("\n")
-                outputfile.write("*"*40)
-                outputfile.write("\n") 
-                try:
-                    config_output = ssh_session.send_config_set(commands, read_timeout=30, cmd_verify=True)
-                    if "[confirm]" in config_output:  # send 'y' wehen confirm is needet (f.e Clear counters)
-                            config_output +=  ssh_session.send_command_timing('y')
-                    outputfile.write(config_output)
-                except UnboundLocalError:
-                    print(f"SSH-Error on device {hostname}")
+        hostfilename = hostname + "_quick_config.txt"
+        with open(f"{OUTPUT_DIR}/{hostfilename}", "w") as outputfile:
+            outputfile.write("\n")
+            outputfile.write("*"*40)
+            outputfile.write("\n")
+            try:
+                config_output = ssh_session.send_config_set(commands, read_timeout=30, cmd_verify=True)
+                if "[confirm]" in config_output:
+                    config_output += ssh_session.send_command_timing('y')
+                outputfile.write(config_output)
+            except Exception as e:
+                print(f'QuickCommand: config error on {hostname}: {e}')
     else:
-        hostfilename = hostname +"_quick_command.txt"
-        try:
-            with open (f"{OUTPUT_DIR}/{hostfilename}","w") as outputfile:
+        hostfilename = hostname + "_quick_command.txt"
+        with open(f"{OUTPUT_DIR}/{hostfilename}", "w") as outputfile:
+            outputfile.write("\n")
+            outputfile.write("*"*40)
+            outputfile.write("\n")
+            for command in commands:
+                outputfile.write(command)
+                outputfile.write("\n")
+                outputfile.write("**" + "-"*40 + "**")
+                outputfile.write("\n")
+                try:
+                    commandoutput = ssh_session.send_command_timing(command)
+                    if "[confirm]" in commandoutput:
+                        commandoutput += ssh_session.send_command_timing('y')
+                except Exception as e:
+                    commandoutput = f'ERROR: {e}'
+                    print(f'QuickCommand: command "{command}" failed on {hostname}: {e}')
+                outputfile.write(commandoutput)
                 outputfile.write("\n")
                 outputfile.write("*"*40)
-                outputfile.write("\n")  
-                for command in commands:
-                    outputfile.write(command)
-                    outputfile.write("\n")
-                    outputfile.write("**"+"-"*40+"**")
-                    outputfile.write("\n")
-                    commandoutput = ssh_session.send_command_timing(command)
-                    if "[confirm]" in commandoutput:  # send 'y' wehen confirm is needet (f.e Clear counters)
-                        commandoutput +=  ssh_session.send_command_timing('y')
-                    outputfile.write(commandoutput) 
-                    outputfile.write("\n")
-                    outputfile.write("*"*40)
-                    outputfile.write("\n")
-        except Exception as e:
-            logging.debug('get_quickcommands.execute_quickcommand: Somthing went wrong with sending commands')
-            logging.debug(e)
+                outputfile.write("\n")
     return
 

@@ -1,11 +1,12 @@
 from models import network_device
 from netmiko import ConnectHandler, SSHDetect, exceptions
+import netmiko_multihop
 import os
 from flask import Flask, render_template, flash, url_for, redirect, send_file, request
 from werkzeug.utils import secure_filename
 from wtforms.form import FormMeta
 from wtforms.validators import HostnameValidation
-from forms import DeviceDiscoveryForm, QuickCommand, PasswordForm
+from forms import DeviceDiscoveryForm, QuickCommand, PasswordForm, JumphostForm
 import ipaddress
 import get_deviceinfos
 import get_status
@@ -86,11 +87,17 @@ def check_ip_network(ip_network):
     except:
         return (False)
 
-def write_device_file(devices):
+def write_device_file(devices, jumphosts_list=None):
+    if jumphosts_list is None:
+        jumphosts_list = []
     with open(f'{DUMP_DIR}/device_file.csv', 'w') as dev_file:
-        dev_file.write('Name,Type,IP-Address, Username\n')
+        dev_file.write('Name,Type,IP-Address,Username,Is_Jumphost,Port,Jumphost_IP\n')
+        # Write jumphosts first so import can reconstruct them before devices reference them
+        for jh in jumphosts_list:
+            dev_file.write(f'{jh.name},{jh.type},{jh.ip_addr},{jh.username},True,{jh.port},\n')
         for device in devices:
-            dev_file.write(f'{device.name},{device.type},{device.ip_addr},{device.username}\n')
+            jh_ip = device.jumphost.ip_addr if device.use_jumphost and device.jumphost else ''
+            dev_file.write(f'{device.name},{device.type},{device.ip_addr},{device.username},False,22,{jh_ip}\n')
 
 def find_type_from_hostname(devices,hostname):
     for device in devices:
@@ -239,14 +246,18 @@ def index():
 
 @app.route("/devicediscovery", methods=['GET', 'POST'])
 def devicediscovery():
-    global username, password, ip_network, devices, telnet
+    global username, password, ip_network, devices, telnet, jumphosts, selected_jumphost
     content=get_status.get_status(devices)
     form = DeviceDiscoveryForm()
+    form.jumphost.choices = [('none', '-- Direct Connection --')] + \
+                            [(jh.ip_addr, f"{jh.name} ({jh.ip_addr})") for jh in jumphosts]
     if form.validate_on_submit():
         username=form.username.data
         password=form.password.data
         ip_network=form.ip_network.data
         telnet=form.telnet.data
+        jh_ip = form.jumphost.data
+        selected_jumphost = next((jh for jh in jumphosts if jh.ip_addr == jh_ip), None)
         if not check_ip_network(ip_network):
             flash(f'non valid IPv4 Network: {ip_network}', 'success')
             return redirect(url_for('devicediscovery'))
@@ -265,9 +276,9 @@ def discover_loading():
 
 @app.route("/trylogon")
 def trylogon():
-    global username, password, ip_network, devices, telnet
+    global username, password, ip_network, devices, telnet, selected_jumphost
     content=get_status.get_status(devices)
-    login_devices=get_deviceinfos.ssh_login(ip_network, username, password, telnet)
+    login_devices=get_deviceinfos.ssh_login(ip_network, username, password, telnet, selected_jumphost)
     logging.debug(f'webnetworkdump.trylogon. Devices: {login_devices}')
     for device in login_devices:
         exist = False
@@ -313,7 +324,7 @@ def device_view():
 
         # Handle "Export Devices" action
         elif request.form.get('action') == 'export_devices':
-            write_device_file(devices)
+            write_device_file(devices, jumphosts)
             output_path = f"{DUMP_DIR}/device_file.csv"
             return send_file(output_path, as_attachment=True)
         
@@ -323,7 +334,7 @@ def device_view():
 
     logging.debug(f'webnetworkdump.device_view. Device-Objects in View: {devices}')
     content=get_status.get_status(devices)
-    return render_template("/device_view.html", status=content, devices=devices)
+    return render_template("/device_view.html", status=content, devices=devices, jumphosts=jumphosts)
 
 @app.route("/webssh/<string:device_ip>") # Connect to WebSSH-Server on localhost
 def webssh(device_ip):
@@ -393,7 +404,7 @@ def dump():
     threads.close()
     threads.join()
     logging.debug(f'Dumping Data is done')
-    write_device_file(devices)
+    write_device_file(devices, jumphosts)
 
 #    
 ###### Parse collected Files  ######
@@ -630,29 +641,54 @@ def quickcommands_download():
 
 @app.route("/import", methods=['GET', 'POST'])
 def import_devices():
-    # Import Devices from device_file
-    # Device file is from previous discovery and ony 1 Password is supported
     from models import network_device
-    global  devices
-    content=get_status.get_status(devices)
+    global devices, jumphosts
+    content = get_status.get_status(devices)
     form = PasswordForm()
     if form.validate_on_submit():
-        password=form.password.data
+        password = form.password.data
         file = os.listdir("./upload")
         with open(f'./upload/{file[0]}') as f:
-            file = f.read()
-        for line in file.split('\n'):
-            colums=line.split(',')
-            if len(colums)<3:
+            lines = f.read().split('\n')
+
+        imported_jumphosts = {}  # ip_addr -> network_device (jumphost)
+
+        # First pass: build jumphost objects so devices can reference them
+        for line in lines:
+            cols = line.split(',')
+            if len(cols) < 4:
                 continue
-            hostname=colums[0]
-            device_type=colums[1]
-            IP=colums[2]
-            username=colums[3]
-            if "IP-Address" in IP: #Exclude 1st Line
-                continue            
-            device = network_device(name=hostname, ip_addr=IP, username=username, password=password, dev_id=1, enabled=True, type=device_type, connected=True)
-            devices.append(device)    
+            if 'IP-Address' in cols[2]:  # header row
+                continue
+            is_jh = cols[4].strip().lower() == 'true' if len(cols) > 4 else False
+            if not is_jh:
+                continue
+            name, dev_type, ip, username = cols[0], cols[1], cols[2].strip(), cols[3]
+            port = int(cols[5].strip()) if len(cols) > 5 and cols[5].strip().isdigit() else 22
+            jh = network_device(name=name, ip_addr=ip, username=username, password=password,
+                                dev_id=len(imported_jumphosts) + 1, enabled=True, type=dev_type,
+                                connected=True, is_jumphost=True, port=port)
+            imported_jumphosts[ip] = jh
+            jumphosts.append(jh)
+
+        # Second pass: build regular devices and link to jumphosts
+        for line in lines:
+            cols = line.split(',')
+            if len(cols) < 4:
+                continue
+            if 'IP-Address' in cols[2]:
+                continue
+            is_jh = cols[4].strip().lower() == 'true' if len(cols) > 4 else False
+            if is_jh:
+                continue
+            name, dev_type, ip, username = cols[0], cols[1], cols[2].strip(), cols[3]
+            jh_ip = cols[6].strip() if len(cols) > 6 else ''
+            jh_obj = imported_jumphosts.get(jh_ip)
+            device = network_device(name=name, ip_addr=ip, username=username, password=password,
+                                    dev_id=1, enabled=True, type=dev_type, connected=True,
+                                    use_jumphost=(jh_obj is not None), jumphost=jh_obj)
+            devices.append(device)
+
         return redirect('/device_view')
     return render_template("import.html", form=form, title="Device Import", status=content)
 
@@ -716,7 +752,54 @@ def delete_files():
 def about():
     global devices
     content=get_status.get_status(devices)
-    return render_template("about.html",status=content) 
+    return render_template("about.html",status=content)
+
+@app.route("/jumphost", methods=['GET', 'POST'])
+def jumphost():
+    global jumphosts
+    from models import network_device
+    content = get_status.get_status(devices)
+    form = JumphostForm()
+    if form.validate_on_submit():
+        test_params = {
+            'device_type': 'linux',
+            'ip': form.ip_addr.data,
+            'port': form.port.data,
+            'username': form.username.data,
+            'password': form.password.data,
+            'timeout': 10,
+            'auth_timeout': 10,
+        }
+        try:
+            ssh = ConnectHandler(**test_params)
+            ssh.disconnect()
+        except Exception as e:
+            flash(f'Cannot connect to {form.ip_addr.data}:{form.port.data} — {e}', 'danger')
+            return render_template("jumphost.html", form=form, jumphosts=jumphosts,
+                                   title="Jumphost Management", status=content)
+        jh = network_device(
+            dev_id=len(jumphosts) + 1,
+            name=form.name.data,
+            ip_addr=form.ip_addr.data,
+            port=form.port.data,
+            username=form.username.data,
+            password=form.password.data,
+            type='linux',
+            enabled=True,
+            connected=True,
+            is_jumphost=True,
+        )
+        jumphosts.append(jh)
+        flash(f'Jumphost "{jh.name}" ({jh.ip_addr}:{jh.port}) connected and added successfully.', 'success')
+        return redirect(url_for('jumphost'))
+    return render_template("jumphost.html", form=form, jumphosts=jumphosts, title="Jumphost Management", status=content)
+
+@app.route("/jumphost/delete/<string:jh_ip>")
+def jumphost_delete(jh_ip):
+    global jumphosts
+    jumphosts = [jh for jh in jumphosts if jh.ip_addr != jh_ip]
+    flash(f'Jumphost {jh_ip} removed.', 'success')
+    return redirect(url_for('jumphost'))
 
 def set_upgrade_status(text):
     with open(STATUS_FILE, "w") as f:

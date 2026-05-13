@@ -40,6 +40,7 @@
                     <th>IP-Addr</th>
                     <th>Username</th>
                     <th>Type</th>
+                    <th>Via Jumphost</th>
                     <th>Enabled</th>
                     <th>Connectivity</th>
                     <th>SSH</th>
@@ -53,6 +54,13 @@
                             <td>{{ device.ip_addr }}</td>
                             <td>{{ device.username }}</td>
                             <td>{{ device.type }}</td>
+                            <td>
+                                {% if device.use_jumphost and device.jumphost %}
+                                    <span title="{{ device.jumphost.ip_addr }}:{{ device.jumphost.port }}">{{ device.jumphost.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if device.enabled %}
                                 <span class="enabled">✅Enabled</span>
@@ -103,5 +111,31 @@
         <input type="hidden" name="action" value="sw_upgrade">
         <button type="submit" class="btn btn-danger" >Software Upgrade</button>
     </form>
-    
+
+    {% if jumphosts %}
+    <h5 class="mt-4">Configured Jumphosts</h5>
+    <table class="table table-bordered table-hover table-sm">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>IP-Addr</th>
+                <th>Port</th>
+                <th>Username</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for jh in jumphosts %}
+            <tr>
+                <td>{{ jh.name }}</td>
+                <td>{{ jh.ip_addr }}</td>
+                <td>{{ jh.port }}</td>
+                <td>{{ jh.username }}</td>
+                <td>{{ jh.type }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
 {% endblock content %}

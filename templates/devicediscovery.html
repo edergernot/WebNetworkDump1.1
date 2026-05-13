@@ -33,6 +33,11 @@
                     {{ form.telnet.label(class="form-control-label") }}
                     {{ form.telnet(class="form-control form-control-lg") }}
                 </div>
+                <div class="form-group mt-3">
+                    {{ form.jumphost.label(class="form-control-label") }}
+                    {{ form.jumphost(class="form-control form-control-lg") }}
+                    <small class="form-text text-muted">Add jumphosts via the <a href="/jumphost">Jumphost menu</a>.</small>
+                </div>
             </fieldset>
             <legend class="border-bottom mb-4"></legend>
             <p>When pressing the button, try to login to these devices</p>

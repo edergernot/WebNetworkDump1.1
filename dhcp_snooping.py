@@ -3,9 +3,7 @@
 def configure_dhcpsnooping(ssh_device):
     import time
     import logging
-    logging.basicConfig(level=logging.DEBUG) # Needet for debugging
-    from netmiko import ConnectHandler
-    import logging
+    from get_dumps import _connect
     OUTPUT_DIR='./quickcommand'
     trunk_interface=[]
     trunk_config=[]
@@ -20,7 +18,7 @@ def configure_dhcpsnooping(ssh_device):
     if dev_type != 'cisco_ios':  # only run on Cisco IOS devices
         return
     try:
-        ssh_session = ConnectHandler(**ssh_device)
+        ssh_session = _connect(ssh_device)
         print (f"Connected to {ssh_session.find_prompt()}, executing DHCP-Snooping")
     except Exception as e:
         logging.debug(f'find_trunk_ports Something went wrong when connecting Device')
