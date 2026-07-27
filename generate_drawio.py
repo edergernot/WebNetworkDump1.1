@@ -113,8 +113,22 @@ def generate_drawio(data):
             node['type']=line['capabilities'].split(" ")[0] # get the first capability
             link["from"]=local_node
             link["to"]=remote_node
-            link["local_port"]=short_portname(line["local_port"])
-            link["remote_port"]=short_portname( line["remote_port"])
+            try:
+                link["local_port"]=short_portname(line["local_port"])
+            except KeyError:
+                pass
+            try:
+                link["local_port"]=short_portname(line["local_interface"])
+            except KeyError:
+                pass
+            try:
+                link["remote_port"]=short_portname( line["remote_port"])
+            except KeyError:
+                pass
+            try:
+                link["remote_port"]=short_portname( line["neighbor_interface"])
+            except KeyError:
+                pass
             reduced_links.append(link) 
             host_exist = False
             for existing_node in reduced_nodes:  # check if node allready exist
