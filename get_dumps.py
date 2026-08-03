@@ -44,6 +44,8 @@ COMMANDS = ["show clock",
             "show mka summary",
             "show authentication sessions",
             "show ip dhcp shooping",
+            "show device-tracking database",
+            "show device-tracking policies"
             ]
 
 VRF_COMMANDS = ["show ip route vrf <VRF>",

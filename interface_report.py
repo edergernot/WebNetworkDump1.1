@@ -253,7 +253,7 @@ def json_dump(interfaces):
             out.write(json_out)
 
 def interface_report(ssh):
-    generate_oui_dict()
+    generate_oui_dict()   # Read OUI.json file and create dict
     Interface_cfg=[]
     hostname = ssh.find_prompt()[:-1]
 
@@ -297,7 +297,7 @@ def interface_report(ssh):
         
 if __name__ == "__main__":
     print("generate OUI-Dict")
-    generate_oui_dict()
+    generate_oui_dict()  # Read OUI json file and create dict
     if len(sys.argv) == 1: # no device-file was added. Crawl from seedswitch
         interface_report(seeddevice)
         for switch in switches:
